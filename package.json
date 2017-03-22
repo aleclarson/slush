@@ -1,0 +1,12 @@
+{
+  "name": "slush",
+  "version": "1.0.0",
+  "main": "js/index",
+  "plugins": [
+    "lotus-coffee"
+  ],
+  "scripts": {
+    "build": "coffee-build -v 1.12.x -b -o js src",
+    "postinstall": "npm run build"
+  }
+}
