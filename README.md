@@ -6,6 +6,9 @@ slush = require "slush"
 
 # Create a `slush` server (basically an `express` wrapper).
 app = slush()
+
+app.onReady (url) ->
+  console.log "The server is listening at: #{url}"
 ```
 
 The `slush` server must use HTTPS. Make sure `ssl.key` and `ssl.crt` exist in your project root.
@@ -33,9 +36,9 @@ app.addPipe (req, res) ->
 
 ### Request contexts
 
-Every pipe has a unique context. By default, an object literal is created.
+Every request has a unique context. By default, an object literal is created.
 
-You can set `app.createContext` to create the initial context for each request. The arguments are `(req, res)`.
+You can set `app.createContext` to override this behavior. The arguments are `(req, res)`.
 
 Every context inherits from the global context, `app.context`.
 

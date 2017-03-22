@@ -1,20 +1,21 @@
 
-assertTypes = require "assertTypes"
 compression = require "compression"
+assertTypes = require "assertTypes"
+assertType = require "assertType"
 setProto = require "setProto"
 Promise = require "Promise"
 express = require "express"
+isType = require "isType"
 https = require "https"
 path = require "path"
+ip = require "ip"
 
 optionTypes =
   port: Number.Maybe
   compress: Boolean.Maybe
 
-module.exports = (options) ->
+module.exports = (options = {}) ->
   assertTypes options, optionTypes
-
-  deferred = Promise.defer()
 
   app = express()
 
@@ -25,7 +26,12 @@ module.exports = (options) ->
 
   port = options.port or process.env.PORT or 4443
   server = https.createServer ssl(), app
-  server.listen port, resolve
+
+  deferred = Promise.defer()
+  server.listen port, deferred.resolve
+  app.onceReady = (callback) ->
+    deferred.promise.then ->
+      callback "https://" + ip.address() + ":" + port
 
   if options.compress
     app.use compression()
@@ -93,6 +99,7 @@ module.exports = (options) ->
 
     # Uncaught errors end up here.
     .fail (error) ->
+      console.log error.stack
       res.status 500
       res.send {error: "Something bad happened. And it's not your fault. Sorry!"}
       # TODO: Support custom "500 Internal Error" page.
@@ -105,6 +112,6 @@ module.exports = (options) ->
 
 ssl = ->
   fs = require "fs"
-  key = fs.readFileSync path.resolve "ssl.key", "utf8"
-  cert = fs.readFileSync path.resolve "ssl.crt", "utf8"
+  key = fs.readFileSync path.resolve("ssl.key"), "utf8"
+  cert = fs.readFileSync path.resolve("ssl.crt"), "utf8"
   return {key, cert}
