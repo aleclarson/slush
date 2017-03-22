@@ -8,5 +8,15 @@
   "scripts": {
     "build": "coffee-build -v 1.12.x -b -o js src",
     "postinstall": "npm run build"
+  },
+  "dependencies": {
+    "Promise": "aleclarson/Promise#2.2.1",
+    "assertTypes": "aleclarson/assertTypes#2.0.1",
+    "compression": "^1.6.2",
+    "express": "^4.15.2",
+    "isType": "aleclarson/isType#1.0.1",
+    "log": "aleclarson/log#2.2.0",
+    "setProto": "aleclarson/setProto#1.0.0",
+    "steal": "aleclarson/steal#1.2.0"
   }
 }
