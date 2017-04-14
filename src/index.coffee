@@ -100,6 +100,8 @@ module.exports = (options = {}) ->
         res.status 400 if res.statusCode is 200
         return res.send {error: result.message}
 
+      throw Error "Invalid return type: #{result.constructor}"
+
     # Start with the first pipe.
     Promise.try next
 
