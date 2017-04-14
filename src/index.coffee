@@ -6,7 +6,6 @@ setProto = require "setProto"
 Promise = require "Promise"
 express = require "express"
 isType = require "isType"
-https = require "https"
 path = require "path"
 now = require "performance-now"
 log = require "log"
@@ -26,14 +25,27 @@ module.exports = (options = {}) ->
     req.parts = req.path.split "/"
     req.next()
 
-  port = options.port or process.env.PORT or 4443
-  server = https.createServer ssl(), app
+  server =
+    if options.secure
+    then require("https").createServer ssl(), app
+    else require("http").createServer app
 
-  deferred = Promise.defer()
-  server.listen port, deferred.resolve
-  app.onceReady = (callback) ->
-    deferred.promise.then ->
-      callback "https://" + ip.address() + ":" + port
+  port =
+    options.port or
+    process.env.PORT or
+    if options.secure then 4443 else 8000
+
+  app.onceReady = do ->
+
+    {promise, resolve} = Promise.defer()
+    server.listen port, resolve
+
+    protocol = if options.secure then "https" else "http"
+    url = protocol + "://" + ip.address() + ":" + port
+
+    return (callback) ->
+      promise.then ->
+        callback url
 
   if options.compress
     app.use compression()
