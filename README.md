@@ -17,17 +17,17 @@ The `slush` server must use HTTPS. Make sure `ssl.key` and `ssl.crt` exist in yo
 
 The `slush` server uses a pipeline of request handlers (called "pipes").
 
-Pipes are able to return a `Promise`. Once resolved, the server will determine its next action.
+The return value of each pipe is used to determine the server's next action.
 
-To continue to the next pipe, a pipe can return `undefined`.
+Return `undefined` or `null` to skip the rest of the current pipe.
 
-If the request is invalid, a pipe can return an `Error` instance.
+Return an `Error` instance for invalid requests.
 
-The request will continue to be handled by the next pipe until `res.send` is called.
+Return a `Promise` instance for asynchronous requests. The resolved value is treated the same as synchronous return values.
 
-If `res.send` is never called, the server responds with "404 Not Found".
+The server will visit each pipe in the pipeline until `res.send` is called. If that never happens, the server responds with "404 Not Found".
 
-If a pipe throws an `Error` instance, the server responds with "500 Internal Error".
+If an `Error` instance is thrown while inside a pipe, the server responds with "500 Internal Error".
 
 ```coffee
 app.addPipe (req, res) ->
