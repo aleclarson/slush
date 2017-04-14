@@ -20,11 +20,6 @@ module.exports = (options = {}) ->
 
   app = express()
 
-  app.use (req) ->
-    req.path = req.path.slice 1
-    req.parts = req.path.split "/"
-    req.next()
-
   server =
     if options.secure
     then require("https").createServer ssl(), app
