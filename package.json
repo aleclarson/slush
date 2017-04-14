@@ -19,7 +19,6 @@
     "isType": "aleclarson/isType#1.0.1",
     "log": "aleclarson/log#2.2.0",
     "performance-now": "^2.1.0",
-    "setProto": "aleclarson/setProto#1.0.0",
-    "steal": "aleclarson/steal#1.2.0"
+    "setProto": "aleclarson/setProto#1.0.0"
   }
 }
