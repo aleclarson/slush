@@ -8,6 +8,8 @@ express = require "express"
 isType = require "isType"
 https = require "https"
 path = require "path"
+now = require "performance-now"
+log = require "log"
 ip = require "ip"
 
 optionTypes =
@@ -68,8 +70,10 @@ module.exports = (options = {}) ->
     index = -1
 
     # Continue to the next pipe.
+    startTime = null
     next = ->
       return if ++index is length
+      startTime = now()
       result = pipes[index].call context, req, res
       if isType result, Promise
       then result.then done
@@ -77,6 +81,8 @@ module.exports = (options = {}) ->
 
     # Attempt to send the response.
     done = (result) ->
+      log.it req.method + " " + req.path + " " + (now() - startTime).toFixed(3) + "ms"
+
       return if res._headerSent
       return next() if result is undefined
 
