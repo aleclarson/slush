@@ -91,7 +91,7 @@ module.exports = (options = {}) ->
       log.it req.method + " " + req.path + " " + (now() - startTime).toFixed(3) + "ms"
 
       return if res._headerSent
-      return next() if result is undefined
+      return next() unless result
 
       if isType result, Object
         return res.send result
