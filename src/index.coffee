@@ -82,7 +82,7 @@ module.exports = (options = {}) ->
       return if ++index is length
       startTime = now()
       result = pipes[index].call context, req, res
-      if isType result, Promise
+      if result and isType result.then, Function
       then result.then done
       else done result
 
