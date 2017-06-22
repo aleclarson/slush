@@ -108,6 +108,7 @@ module.exports = (options = {}) ->
 
       res.setHeader "Content-Type", "application/json"
 
+      # For security reasons, only send objects: http://stackoverflow.com/a/21510402/2228559
       if result.constructor is Object
         return res.send result
 
