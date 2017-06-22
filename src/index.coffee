@@ -1,5 +1,6 @@
 
 # TODO: Support custom "404 Not Found" page.
+# TODO: Support custom "500 Internal Error" page.
 
 compression = require "compression"
 assertTypes = require "assertTypes"
@@ -114,10 +115,11 @@ module.exports = (options = {}) ->
 
     # Uncaught errors end up here.
     .fail (error) ->
-      console.log error.stack
+      log.moat 1
+      log.white error.stack
+      log.moat 1
       res.status 500
-      res.send {error: "Something bad happened. And it's not your fault. Sorry!"}
-      # TODO: Support custom "500 Internal Error" page.
+      res.send {error: "Something went wrong on our end. Sorry!"}
 
   return app
 
