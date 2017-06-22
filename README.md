@@ -1,5 +1,5 @@
 
-# slush v1.0.0 ![stable](https://img.shields.io/badge/stability-stable-4EBA0F.svg?style=flat)
+# slush v1.1.0 ![stable](https://img.shields.io/badge/stability-stable-4EBA0F.svg?style=flat)
 
 An `express` wrapper that supports `Promise` instances and simple responses using return values.
 
