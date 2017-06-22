@@ -10,15 +10,14 @@
     "postinstall": "npm run build"
   },
   "dependencies": {
-    "Promise": "aleclarson/Promise#2.2.1",
-    "assertType": "aleclarson/assertType#2.0.1",
-    "assertTypes": "aleclarson/assertTypes#2.0.1",
+    "Promise": "aleclarson/Promise#2.2.3",
+    "assertType": "aleclarson/assertType#2.0.2",
+    "assertTypes": "aleclarson/assertTypes#2.0.2",
     "compression": "^1.6.2",
     "express": "^4.15.2",
     "ip": "^1.1.5",
-    "isType": "aleclarson/isType#1.0.1",
-    "log": "aleclarson/log#2.2.0",
+    "log": "aleclarson/log#2.2.1",
     "performance-now": "^2.1.0",
-    "setProto": "aleclarson/setProto#1.0.0"
+    "setProto": "aleclarson/setProto#1.0.1"
   }
 }
