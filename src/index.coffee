@@ -24,6 +24,8 @@ module.exports = (options = {}) ->
     then require("https").createServer ssl(), app
     else require("http").createServer app
 
+  server.maxHeadersCount = 50
+
   app.port = port =
     options.port or
     process.env.PORT or
