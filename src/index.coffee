@@ -15,6 +15,7 @@ ip = require "ip"
 
 optionTypes =
   port: Number.Maybe
+  secure: Boolean.Maybe
   compress: Boolean.Maybe
 
 __DEV__ = process.env.NODE_ENV isnt "production"
