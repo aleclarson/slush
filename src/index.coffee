@@ -17,6 +17,8 @@ optionTypes =
   port: Number.Maybe
   compress: Boolean.Maybe
 
+__DEV__ = process.env.NODE_ENV isnt "production"
+
 module.exports = (options = {}) ->
   assertTypes options, optionTypes
 
@@ -80,8 +82,20 @@ module.exports = (options = {}) ->
     {length} = pipes = app.pipes
     index = -1
 
-    # Continue to the next pipe.
-    startTime = null
+    measure = Function.prototype
+    if __DEV__
+      startTime = now()
+      measure = ->
+        log.moat 0
+        status = res.statusCode
+        if status is 200
+        then log.green status + " "
+        else log.red status + " "
+        log.white req.method + " " + req.path + " "
+        log.gray (now() - startTime).toFixed(3) + "ms"
+        log.moat 0
+        return
+
     next = ->
 
       if ++index is length
@@ -90,15 +104,12 @@ module.exports = (options = {}) ->
         res.send {error: "Nothing exists here. Sorry!"}
         return
 
-      startTime = now()
       result = pipes[index].call context, req, res
       if result and typeof result.then is "function"
       then result.then resolve
       else resolve result
 
     resolve = (result) ->
-      log.it req.method + " " + req.path + " " + (now() - startTime).toFixed(3) + "ms"
-
       return if res.headersSent
       return next() unless result
 
@@ -129,6 +140,7 @@ module.exports = (options = {}) ->
     .then ->
       # Prevent DoS attacks using large POST bodies.
       req.destroy() if req.reading
+      measure()
 
     # Uncaught errors end up here.
     .fail (error) ->
@@ -137,6 +149,7 @@ module.exports = (options = {}) ->
       log.moat 1
       res.status 500
       res.send {error: "Something went wrong on our end. Sorry!"}
+      measure()
 
   return app
 
