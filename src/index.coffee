@@ -126,6 +126,10 @@ module.exports = (options = {}) ->
       unless res.finished
         return onFinish res
 
+    .then ->
+      # Prevent DoS attacks using large POST bodies.
+      req.destroy() if req.reading
+
     # Uncaught errors end up here.
     .fail (error) ->
       log.moat 1
