@@ -1,11 +1,13 @@
 
+# TODO: Support custom "404 Not Found" page.
+# TODO: Support custom "500 Internal Error" page.
+
 compression = require "compression"
 assertTypes = require "assertTypes"
 assertType = require "assertType"
 setProto = require "setProto"
 Promise = require "Promise"
 express = require "express"
-isType = require "isType"
 path = require "path"
 now = require "performance-now"
 log = require "log"
@@ -13,7 +15,10 @@ ip = require "ip"
 
 optionTypes =
   port: Number.Maybe
+  secure: Boolean.Maybe
   compress: Boolean.Maybe
+
+__DEV__ = process.env.NODE_ENV isnt "production"
 
 module.exports = (options = {}) ->
   assertTypes options, optionTypes
@@ -25,12 +30,14 @@ module.exports = (options = {}) ->
     then require("https").createServer ssl(), app
     else require("http").createServer app
 
-  port =
+  server.maxHeadersCount = 50
+
+  app.port = port =
     options.port or
     process.env.PORT or
     if options.secure then 4443 else 8000
 
-  app.onceReady = do ->
+  app.ready = do ->
 
     {promise, resolve} = Promise.defer()
     server.listen port, resolve
@@ -46,18 +53,12 @@ module.exports = (options = {}) ->
     app.use compression()
 
   # The array of request handlers.
-  app.pipes = []
+  pipes = []
 
-  app.addPipe = (pipe) ->
+  app.pipe = (pipe) ->
     assertType pipe, Function
-    app.pipes.push pipe
-    return
-
-  app.addPipes = (pipes) ->
-    for pipe in pipes
-      assertType pipe, Function
-      app.pipes.push pipe
-    return
+    pipes.push pipe
+    return app
 
   # Context shared by all requests.
   app.context = {}
@@ -73,27 +74,47 @@ module.exports = (options = {}) ->
     context = app.createContext req, res
     setProto context, app.context
 
-    {length} = pipes = app.pipes
     index = -1
 
-    # Continue to the next pipe.
-    startTime = null
-    next = ->
-      return if ++index is length
+    measure = Function.prototype
+    if __DEV__
       startTime = now()
+      measure = ->
+        log.moat 0
+        status = res.statusCode
+        if status is 200
+        then log.green status + " "
+        else log.red status + " "
+        log.white req.method + " " + req.path + " "
+        log.gray (now() - startTime).toFixed(3) + "ms"
+        log.moat 0
+        return
+
+    next = ->
+
+      if ++index is pipes.length
+        res.status 404
+        res.setHeader "Content-Type", "application/json"
+        res.send {error: "Nothing exists here. Sorry!"}
+        return
+
       result = pipes[index].call context, req, res
-      if result and isType result.then, Function
-      then result.then done
-      else done result
+      if result and typeof result.then is "function"
+      then result.then resolve
+      else resolve result
 
-    # Attempt to send the response.
-    done = (result) ->
-      log.it req.method + " " + req.path + " " + (now() - startTime).toFixed(3) + "ms"
-
-      return if res._headerSent
+    resolve = (result) ->
+      return if res.headersSent
       return next() unless result
 
-      if isType result, Object
+      if typeof result is "number"
+        res.status result
+        return res.end()
+
+      res.setHeader "Content-Type", "application/json"
+
+      # For security reasons, only send objects: http://stackoverflow.com/a/21510402/2228559
+      if result.constructor is Object
         return res.send result
 
       if result instanceof Error
@@ -105,19 +126,24 @@ module.exports = (options = {}) ->
     # Start with the first pipe.
     Promise.try next
 
-    # Unhandled requests end up here.
+    # Wait for the response to finish.
     .then ->
-      return if res._headerSent
-      res.status 404
-      res.send {error: "This page does not exist. Sorry!"}
-      # TODO: Support custom "404 Not Found" page.
+      unless res.finished
+        return onFinish res
+
+    .then ->
+      # Prevent DoS attacks using large POST bodies.
+      req.destroy() if req.reading
+      measure()
 
     # Uncaught errors end up here.
     .fail (error) ->
-      console.log error.stack
+      log.moat 1
+      log.white error.stack
+      log.moat 1
       res.status 500
-      res.send {error: "Something bad happened. And it's not your fault. Sorry!"}
-      # TODO: Support custom "500 Internal Error" page.
+      res.send {error: "Something went wrong on our end. Sorry!"}
+      measure()
 
   return app
 
@@ -130,3 +156,9 @@ ssl = ->
   key = fs.readFileSync path.resolve("ssl.key"), "utf8"
   cert = fs.readFileSync path.resolve("ssl.crt"), "utf8"
   return {key, cert}
+
+onFinish = (res) ->
+  deferred = Promise.defer()
+  res.on "finish", deferred.resolve
+  res.on "error", deferred.reject
+  return deferred.promise
