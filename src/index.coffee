@@ -98,7 +98,7 @@ module.exports = (options = {}) ->
     resolve = (result) ->
       log.it req.method + " " + req.path + " " + (now() - startTime).toFixed(3) + "ms"
 
-      return if res._headerSent
+      return if res.headersSent
       return next() unless result
 
       if result.constructor is Object
