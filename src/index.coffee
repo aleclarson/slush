@@ -86,6 +86,7 @@ module.exports = (options = {}) ->
 
       if ++index is length
         res.status 404
+        res.setHeader "Content-Type", "application/json"
         res.send {error: "Nothing exists here. Sorry!"}
         return
 
@@ -104,6 +105,8 @@ module.exports = (options = {}) ->
       if typeof result is "number"
         res.status result
         return res.end()
+
+      res.setHeader "Content-Type", "application/json"
 
       if result.constructor is Object
         return res.send result
