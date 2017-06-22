@@ -1,4 +1,6 @@
 
+# TODO: Support custom "404 Not Found" page.
+
 compression = require "compression"
 assertTypes = require "assertTypes"
 assertType = require "assertType"
@@ -80,7 +82,12 @@ module.exports = (options = {}) ->
     # Continue to the next pipe.
     startTime = null
     next = ->
-      return if ++index is length
+
+      if ++index is length
+        res.status 404
+        res.send {error: "Nothing exists here. Sorry!"}
+        return
+
       startTime = now()
       result = pipes[index].call context, req, res
       if result and typeof result.then is "function"
@@ -104,13 +111,6 @@ module.exports = (options = {}) ->
 
     # Start with the first pipe.
     Promise.try next
-
-    # Unhandled requests end up here.
-    .then ->
-      return if res._headerSent
-      res.status 404
-      res.send {error: "This page does not exist. Sorry!"}
-      # TODO: Support custom "404 Not Found" page.
 
     # Uncaught errors end up here.
     .fail (error) ->
