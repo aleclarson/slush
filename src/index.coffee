@@ -29,7 +29,7 @@ module.exports = (options = {}) ->
     process.env.PORT or
     if options.secure then 4443 else 8000
 
-  app.onceReady = do ->
+  app.ready = do ->
 
     {promise, resolve} = Promise.defer()
     server.listen port, resolve

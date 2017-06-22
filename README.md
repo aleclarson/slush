@@ -7,7 +7,7 @@ slush = require "slush"
 # Create a `slush` server (basically an `express` wrapper).
 app = slush()
 
-app.onReady (url) ->
+app.ready (url) ->
   console.log "The server is listening at: #{url}"
 ```
 
