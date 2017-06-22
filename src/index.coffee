@@ -121,6 +121,11 @@ module.exports = (options = {}) ->
     # Start with the first pipe.
     Promise.try next
 
+    # Wait for the response to finish.
+    .then ->
+      unless res.finished
+        return onFinish res
+
     # Uncaught errors end up here.
     .fail (error) ->
       log.moat 1
@@ -140,3 +145,9 @@ ssl = ->
   key = fs.readFileSync path.resolve("ssl.key"), "utf8"
   cert = fs.readFileSync path.resolve("ssl.crt"), "utf8"
   return {key, cert}
+
+onFinish = (res) ->
+  deferred = Promise.defer()
+  res.on "finish", deferred.resolve
+  res.on "error", deferred.reject
+  return deferred.promise
