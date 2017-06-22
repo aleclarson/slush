@@ -52,18 +52,12 @@ module.exports = (options = {}) ->
     app.use compression()
 
   # The array of request handlers.
-  app.pipes = []
+  pipes = []
 
-  app.addPipe = (pipe) ->
+  app.pipe = (pipe) ->
     assertType pipe, Function
-    app.pipes.push pipe
-    return
-
-  app.addPipes = (pipes) ->
-    for pipe in pipes
-      assertType pipe, Function
-      app.pipes.push pipe
-    return
+    pipes.push pipe
+    return app
 
   # Context shared by all requests.
   app.context = {}
@@ -79,7 +73,6 @@ module.exports = (options = {}) ->
     context = app.createContext req, res
     setProto context, app.context
 
-    {length} = pipes = app.pipes
     index = -1
 
     measure = Function.prototype
@@ -98,7 +91,7 @@ module.exports = (options = {}) ->
 
     next = ->
 
-      if ++index is length
+      if ++index is pipes.length
         res.status 404
         res.setHeader "Content-Type", "application/json"
         res.send {error: "Nothing exists here. Sorry!"}
