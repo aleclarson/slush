@@ -101,6 +101,10 @@ module.exports = (options = {}) ->
       return if res.headersSent
       return next() unless result
 
+      if typeof result is "number"
+        res.status result
+        return res.end()
+
       if result.constructor is Object
         return res.send result
 
