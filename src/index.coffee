@@ -24,7 +24,7 @@ module.exports = (options = {}) ->
     then require("https").createServer ssl(), app
     else require("http").createServer app
 
-  port =
+  app.port = port =
     options.port or
     process.env.PORT or
     if options.secure then 4443 else 8000
