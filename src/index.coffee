@@ -5,7 +5,6 @@ assertType = require "assertType"
 setProto = require "setProto"
 Promise = require "Promise"
 express = require "express"
-isType = require "isType"
 path = require "path"
 now = require "performance-now"
 log = require "log"
@@ -82,7 +81,7 @@ module.exports = (options = {}) ->
       return if ++index is length
       startTime = now()
       result = pipes[index].call context, req, res
-      if result and isType result.then, Function
+      if result and typeof result.then is "function"
       then result.then done
       else done result
 
@@ -93,7 +92,7 @@ module.exports = (options = {}) ->
       return if res._headerSent
       return next() unless result
 
-      if isType result, Object
+      if result.constructor is Object
         return res.send result
 
       if result instanceof Error
