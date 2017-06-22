@@ -84,11 +84,10 @@ module.exports = (options = {}) ->
       startTime = now()
       result = pipes[index].call context, req, res
       if result and typeof result.then is "function"
-      then result.then done
-      else done result
+      then result.then resolve
+      else resolve result
 
-    # Attempt to send the response.
-    done = (result) ->
+    resolve = (result) ->
       log.it req.method + " " + req.path + " " + (now() - startTime).toFixed(3) + "ms"
 
       return if res._headerSent
