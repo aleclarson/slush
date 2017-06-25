@@ -11,13 +11,21 @@
   },
   "dependencies": {
     "Promise": "aleclarson/Promise#2.2.3",
+    "Type": "aleclarson/Type#2.4.0",
     "assertType": "aleclarson/assertType#2.0.2",
     "assertTypes": "aleclarson/assertTypes#2.0.2",
-    "compression": "^1.6.2",
-    "express": "^4.15.2",
+    "emptyFunction": "aleclarson/emptyFunction#1.0.0",
+    "encodeurl": "^1.0.1",
+    "escape-html": "^1.0.3",
+    "etag": "^1.8.0",
+    "fresh": "^0.5.0",
     "ip": "^1.1.5",
     "log": "aleclarson/log#2.2.1",
+    "parseurl": "^1.3.1",
     "performance-now": "^2.1.0",
-    "setProto": "aleclarson/setProto#1.0.1"
+    "proxy-addr": "^1.1.4",
+    "setProto": "aleclarson/setProto#1.0.1",
+    "statuses": "^1.3.1",
+    "vary": "^1.1.1"
   }
 }

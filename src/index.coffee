@@ -2,150 +2,146 @@
 # TODO: Support custom "404 Not Found" page.
 # TODO: Support custom "500 Internal Error" page.
 
-compression = require "compression"
 assertTypes = require "assertTypes"
 assertType = require "assertType"
 setProto = require "setProto"
 Promise = require "Promise"
-express = require "express"
+Type = require "Type"
 path = require "path"
 now = require "performance-now"
 log = require "log"
 ip = require "ip"
+qs = require "querystring"
 
-optionTypes =
-  port: Number.Maybe
-  secure: Boolean.Maybe
-  compress: Boolean.Maybe
+Response = require "../response"
+Request = require "../request"
+Layer = require "./Layer"
+
+trustProxy = require "./utils/trustProxy"
+etag = require "./utils/etag"
 
 __DEV__ = process.env.NODE_ENV isnt "production"
 
-module.exports = (options = {}) ->
-  assertTypes options, optionTypes
+type = Type "Application"
 
-  app = express()
+type.inherits Function
 
-  server =
-    if options.secure
-    then require("https").createServer ssl(), app
-    else require("http").createServer app
+type.defineArgs
+  port: Number
+  secure: Boolean
+  maxHeaders: Number
 
-  server.maxHeadersCount = 50
+type.defineValues (options) ->
 
-  app.port = port =
-    options.port or
-    process.env.PORT or
-    if options.secure then 4443 else 8000
+  port: getPort options
 
-  app.ready = do ->
+  settings: Object.create null
 
+  _layer: Layer()
+
+  _server: createServer this, options
+
+  _listening: null
+
+type.initInstance (options) ->
+  @_server.maxHeadersCount = options.maxHeaders or 50
+  @_listening = @_listen options
+  return
+
+type.defineFunction (req, res) ->
+  req.timestamp = now()
+
+  parts = req.url.split "?"
+  req.path = parts[0]
+  req.query = qs.parse parts[1]
+
+  req.app = this
+  req.res = res
+  setProto req, Request
+
+  res.app = this
+  res.req = req
+  setProto res, Response
+
+  req.next = ->
+    res.status 404
+    res.send {error: "Nothing exists here. Sorry!"}
+    return
+
+  # Attempt to handle the request.
+  @_layer.try req, res
+
+  # Wait for the response to finish.
+  .then ->
+    unless res.finished
+      return onFinish res
+
+  .then ->
+    # Prevent DoS attacks using large POST bodies.
+    req.destroy() if req.reading
+    measure req, res
+
+  # Uncaught errors end up here.
+  .fail (error) ->
+    log.moat 1
+    log.white error.stack
+    log.moat 1
+    res.status 500
+    res.send {error: "Something went wrong on our end. Sorry!"}
+    measure req, res
+
+type.defineMethods
+
+  get: (name) ->
+    return @settings[name]
+
+  set: (name, value) ->
+
+    # Backwards compatibility with `express`
+    return @settings[name] if arguments.length is 1
+
+    @settings[name] = value
+
+    switch name
+
+      when "etag"
+        @set "etag fn", etag.compile value
+
+      when "trust proxy"
+        @set "trust proxy fn", trustProxy value
+
+    return
+
+  use: (fn) ->
+    @_layer.use fn
+    return this
+
+  pipe: (fn) ->
+    @_layer.pipe fn
+    return this
+
+  drain: (fn) ->
+    @_layer.drain fn
+    return this
+
+  ready: (callback) ->
+    @_listening.then callback
+
+  _listen: (options) ->
+    {port} = this
     {promise, resolve} = Promise.defer()
-    server.listen port, resolve
+    @_server.listen port, ->
+      protocol = if options.secure then "https" else "http"
+      resolve protocol + "://" + ip.address() + ":" + port
+    return promise
 
-    protocol = if options.secure then "https" else "http"
-    url = protocol + "://" + ip.address() + ":" + port
+type.defineStatics
 
-    return (callback) ->
-      promise.then ->
-        callback url
+  Layer: Layer
 
-  if options.compress
-    app.use compression()
+  Router: require "./Router"
 
-  # The array of request handlers.
-  pipes = []
-
-  app.pipe = (pipe) ->
-    assertType pipe, Function
-    pipes.push pipe
-    return app
-
-  # Context shared by all requests.
-  app.context = {}
-
-  # Override this method to construct
-  # a custom context for each request.
-  app.createContext = -> {}
-
-  # The entry point.
-  app.use (req, res) ->
-
-    # Create the context for this request.
-    context = app.createContext req, res
-    setProto context, app.context
-
-    index = -1
-
-    measure = Function.prototype
-    if __DEV__
-      startTime = now()
-      measure = ->
-        log.moat 0
-        status = res.statusCode
-        if status is 200
-        then log.green status + " "
-        else log.red status + " "
-        log.white req.method + " " + req.path + " "
-        log.gray (now() - startTime).toFixed(3) + "ms"
-        log.moat 0
-        return
-
-    next = ->
-
-      if ++index is pipes.length
-        res.status 404
-        res.setHeader "Content-Type", "application/json"
-        res.send {error: "Nothing exists here. Sorry!"}
-        return
-
-      result = pipes[index].call context, req, res
-      if result and typeof result.then is "function"
-      then result.then resolve
-      else resolve result
-
-    resolve = (result) ->
-      return if res.headersSent
-      return next() unless result
-
-      if typeof result is "number"
-        res.status result
-        return res.end()
-
-      res.setHeader "Content-Type", "application/json"
-
-      # For security reasons, only send objects: http://stackoverflow.com/a/21510402/2228559
-      if result.constructor is Object
-        return res.send result
-
-      if result instanceof Error
-        res.status 400 if res.statusCode is 200
-        return res.send {error: result.message}
-
-      throw Error "Invalid return type: #{result.constructor}"
-
-    # Start with the first pipe.
-    Promise.try next
-
-    # Wait for the response to finish.
-    .then ->
-      unless res.finished
-        return onFinish res
-
-    .then ->
-      # Prevent DoS attacks using large POST bodies.
-      req.destroy() if req.reading
-      measure()
-
-    # Uncaught errors end up here.
-    .fail (error) ->
-      log.moat 1
-      log.white error.stack
-      log.moat 1
-      res.status 500
-      res.send {error: "Something went wrong on our end. Sorry!"}
-      measure()
-
-  return app
+module.exports = type.build()
 
 #
 # Helpers
@@ -157,8 +153,31 @@ ssl = ->
   cert = fs.readFileSync path.resolve("ssl.crt"), "utf8"
   return {key, cert}
 
+createServer = (app, options) ->
+  if options.secure
+  then require("https").createServer ssl(), app
+  else require("http").createServer app
+
+getPort = (options) ->
+  port = options.port or parseInt process.env.PORT
+  return port if port
+  return 4443 if options.secure
+  return 8000
+
 onFinish = (res) ->
   deferred = Promise.defer()
   res.on "finish", deferred.resolve
   res.on "error", deferred.reject
   return deferred.promise
+
+measure = (req, res) ->
+  return unless __DEV__
+  log.moat 0
+  status = res.statusCode
+  if status is 200
+  then log.green status + " "
+  else log.red status + " "
+  log.white req.method + " " + req.path + " "
+  log.gray (now() - req.timestamp).toFixed(3) + "ms"
+  log.moat 0
+  return
