@@ -59,6 +59,9 @@ type.defineMethods
       if result.constructor is Object
         return res.send result
 
+      if typeof result is "string"
+        return res.send result
+
       if result instanceof Error
         res.status 400 if res.statusCode is 200
         return res.send {error: result.message}
