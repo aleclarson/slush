@@ -11,7 +11,6 @@ path = require "path"
 now = require "performance-now"
 log = require "log"
 ip = require "ip"
-qs = require "querystring"
 
 Response = require "../response"
 Request = require "../request"
@@ -53,7 +52,7 @@ type.defineFunction (req, res) ->
 
   parts = req.url.split "?"
   req.path = parts[0]
-  req.query = qs.parse parts[1]
+  req.query = parseQuery parts[1]
 
   req.app = this
   req.res = res
@@ -163,6 +162,17 @@ getPort = (options) ->
   return port if port
   return 4443 if options.secure
   return 8000
+
+parseQuery = (query) ->
+  parsed = {}
+  return parsed unless query
+  pairs = query.split "&"
+  for pair in pairs
+    pair = pair.split "="
+    if pair.length is 1
+    then parsed[pair[0]] = yes
+    else parsed[pair[0]] = decodeURIComponent pair[1]
+  return parsed
 
 onFinish = (res) ->
   deferred = Promise.defer()
