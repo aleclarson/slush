@@ -19,6 +19,8 @@ var fresh = require('fresh');
 var parse = require('parseurl');
 var proxyaddr = require('proxy-addr');
 
+var readBody = require('./js/utils/readBody');
+
 /**
  * Request prototype.
  * @public
@@ -32,6 +34,10 @@ var req = Object.create(http.IncomingMessage.prototype)
  */
 
 module.exports = req
+
+req.readBody = function(options) {
+  return readBody(this, options);
+};
 
 req.get = function(name) {
   return this.headers[name];
