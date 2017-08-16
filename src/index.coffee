@@ -1,17 +1,12 @@
 
-# TODO: Support custom "404 Not Found" page.
-# TODO: Support custom "500 Internal Error" page.
-
-assertTypes = require "assertTypes"
-assertType = require "assertType"
 setProto = require "setProto"
 Promise = require "Promise"
 Type = require "Type"
-path = require "path"
 now = require "performance-now"
 log = require "log"
-ip = require "ip"
+qs = require "querystring"
 
+createServer = require "./utils/createServer"
 Response = require "../response"
 Request = require "../request"
 Layer = require "./Layer"
@@ -23,12 +18,12 @@ __DEV__ = process.env.NODE_ENV isnt "production"
 
 type = Type "Application"
 
-type.inherits Function
-
 type.defineArgs
   port: Number
   secure: Boolean
   maxHeaders: Number
+  timeout: Number
+  onError: Function
 
 type.defineValues (options) ->
 
@@ -38,37 +33,39 @@ type.defineValues (options) ->
 
   _layer: Layer()
 
-  _server: createServer this, options
+  _server: createServer options, onRequest.bind this
 
-  _listening: null
+  _timeout: options.timeout
 
-type.initInstance (options) ->
-  @_server.maxHeadersCount = options.maxHeaders or 50
-  @_listening = @_listen options
-  return
+  _onError: options.onError or handle500
 
-type.defineFunction (req, res) ->
+# The root request handler.
+onRequest = (req, res) ->
+  app = this
   req.timestamp = now()
 
   parts = req.url.split "?"
   req.path = parts[0]
-  req.query = parseQuery parts[1]
+  req.query = qs.parse parts[1]
+  setProto req.query, Object.prototype
 
-  req.app = this
+  req.app = app
   req.res = res
   setProto req, Request
 
-  res.app = this
+  res.app = app
   res.req = req
   setProto res, Response
 
-  req.next = ->
-    res.status 404
-    res.send {error: "Nothing exists here. Sorry!"}
-    return
+  # The default 404 response handler.
+  req.next = handle404
+
+  # Prevent long-running requests.
+  if app._timeout > 0
+    req.setTimeout onTimeout, app._timeout
 
   # Attempt to handle the request.
-  @_layer.try req, res
+  app._layer.try req, res
 
   # Wait for the response to finish.
   .then ->
@@ -76,17 +73,17 @@ type.defineFunction (req, res) ->
       return onFinish res
 
   .then ->
+
     # Prevent DoS attacks using large POST bodies.
     req.destroy() if req.reading
-    measure req, res
 
-  # Uncaught errors end up here.
+    if res.statusCode isnt 408
+      app.emit "response", res
+      measure req, res
+
   .fail (error) ->
-    log.moat 1
-    log.white error.stack
-    log.moat 1
-    res.status 500
-    res.send {error: "Something went wrong on our end. Sorry!"}
+    onError error, res
+    app.emit "response", res
     measure req, res
 
 type.defineMethods
@@ -123,16 +120,20 @@ type.defineMethods
     @_layer.drain fn
     return this
 
-  ready: (callback) ->
-    @_listening.then callback
+  on: (eventId, handler) ->
+    @_server.on eventId, handler
 
-  _listen: (options) ->
-    {port} = this
-    {promise, resolve} = Promise.defer()
-    @_server.listen port, ->
-      protocol = if options.secure then "https" else "http"
-      resolve protocol + "://" + ip.address() + ":" + port
-    return promise
+  emit: (eventId, data) ->
+    @_server.emit eventId, data
+
+  ready: (callback) ->
+    if @_server.listening
+    then callback()
+    else @_server.once "listening", callback
+
+  # Used for testing.
+  _send: (req, res) ->
+    onRequest.call this, req, res
 
 type.defineStatics
 
@@ -146,39 +147,24 @@ module.exports = type.build()
 # Helpers
 #
 
-ssl = ->
-  fs = require "fs"
-  key = fs.readFileSync path.resolve("ssl.key"), "utf8"
-  cert = fs.readFileSync path.resolve("ssl.crt"), "utf8"
-  return {key, cert}
-
-createServer = (app, options) ->
-  if options.secure
-  then require("https").createServer ssl(), app
-  else require("http").createServer app
-
 getPort = (options) ->
-  port = options.port or parseInt process.env.PORT
-  return port if port
-  return 4443 if options.secure
-  return 8000
-
-parseQuery = (query) ->
-  parsed = {}
-  return parsed unless query
-  pairs = query.split "&"
-  for pair in pairs
-    pair = pair.split "="
-    if pair.length is 1
-    then parsed[pair[0]] = yes
-    else parsed[pair[0]] = decodeURIComponent pair[1]
-  return parsed
+  unless port = options.port
+    unless port = parseInt process.env.PORT
+      port = if options.secure then 443 else 8000
+    options.port = port
+  return port
 
 onFinish = (res) ->
   deferred = Promise.defer()
   res.on "finish", deferred.resolve
   res.on "error", deferred.reject
   return deferred.promise
+
+onTimeout = (req, res) ->
+  res.status 408
+  res.send {error: "Request timed out"}
+  @emit "response", req
+  measure req, res
 
 measure = (req, res) ->
   return unless __DEV__
@@ -190,4 +176,21 @@ measure = (req, res) ->
   log.white req.method + " " + req.path + " "
   log.gray (now() - req.timestamp).toFixed(3) + "ms"
   log.moat 0
+  return
+
+# Attached to the request object.
+handle404 = ->
+  @res.status 404
+  @res.send {error: "Nothing exists here. Sorry!"}
+  return
+
+# The default handler when the server throws an error.
+handle500 = (error, res) ->
+
+  log.moat 1
+  log.white error.stack
+  log.moat 1
+
+  res.status 500
+  res.send {error: "Something went wrong on our end. Sorry!"}
   return

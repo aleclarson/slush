@@ -1,5 +1,5 @@
 
-# slush v2.1.0 ![stable](https://img.shields.io/badge/stability-stable-4EBA0F.svg?style=flat)
+# slush v2.2.0 ![stable](https://img.shields.io/badge/stability-stable-4EBA0F.svg?style=flat)
 
 Lightweight replacement to `express`.
 
@@ -8,15 +8,17 @@ slush = require "slush"
 
 app = slush()
 
-app.ready (url) ->
-  console.log "The server is listening at: #{url}"
+app.ready ->
+  console.log "Listening at http://localhost:" + app.port
 ```
 
 ### Options
 
-- **port: Number?** If undefined, default to `process.env.PORT`, or `4443` (if HTTPS), or `8000` (if HTTP)
+- **port: Number?** If undefined, default to `process.env.PORT`, or `443` (if HTTPS), or `8000` (if HTTP)
 - **secure: Boolean?** If true, an HTTPS server is created with `ssl.key` and `ssl.crt` from the project root
 - **maxHeaders: Number?** Limit the number of headers (defaults to 50)
+- **timeout: Number?** The timeout (in ms) before a request sends a 408 response
+- **onError: Function?** Send a custom response when your server throws an unexpected error
 
 ### Request handling
 
@@ -44,7 +46,7 @@ If that never happens, the server responds with "404 Not Found".
 
 If an `Error` instance is thrown while inside a pipe, the server responds with "500 Internal Error".
 
--
+### Express middleware
 
 Support for `express` middleware is included.
 
@@ -52,7 +54,7 @@ Support for `express` middleware is included.
 app.use middleware
 ```
 
--
+### The `drain` method
 
 Use the `drain()` method for running code after the response is sent.
 
@@ -61,3 +63,8 @@ app.drain (req, res) ->
   # The response has been sent.
 ```
 
+### Server events
+
+- `request: (req, res)` Called at the beginning of every request
+- `response: (req, res)` Called at the end of every response
+- `close: ()` Called when the server shuts down

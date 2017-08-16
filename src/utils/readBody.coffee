@@ -7,7 +7,7 @@ Promise = require "Promise"
 module.exports = (req, options = {}) ->
   return Promise.resolve() if req.body
 
-  {promise, resolve} = Promise.defer()
+  {promise, resolve, reject} = Promise.defer()
 
   chunks = []
   length = 0
@@ -35,6 +35,8 @@ module.exports = (req, options = {}) ->
     if options.json
     then parseJSON resolve
     else resolve req.body
+
+  req.on "error", reject
 
   return promise
 
