@@ -4,6 +4,7 @@ Promise = require "Promise"
 Type = require "Type"
 now = require "performance-now"
 log = require "log"
+qs = require "querystring"
 
 createServer = require "./utils/createServer"
 Response = require "../response"
@@ -45,7 +46,8 @@ onRequest = (req, res) ->
 
   parts = req.url.split "?"
   req.path = parts[0]
-  req.query = parseQuery parts[1]
+  req.query = qs.parse parts[1]
+  setProto req.query, Object.prototype
 
   req.app = app
   req.res = res
@@ -151,17 +153,6 @@ getPort = (options) ->
       port = if options.secure then 443 else 8000
     options.port = port
   return port
-
-parseQuery = (query) ->
-  parsed = {}
-  return parsed unless query
-  pairs = query.split "&"
-  for pair in pairs
-    pair = pair.split "="
-    if pair.length is 1
-    then parsed[pair[0]] = yes
-    else parsed[pair[0]] = decodeURIComponent pair[1]
-  return parsed
 
 onFinish = (res) ->
   deferred = Promise.defer()
