@@ -12,6 +12,7 @@ now = require "performance-now"
 log = require "log"
 ip = require "ip"
 
+createServer = require "./utils/createServer"
 Response = require "../response"
 Request = require "../request"
 Layer = require "./Layer"
@@ -22,8 +23,6 @@ etag = require "./utils/etag"
 __DEV__ = process.env.NODE_ENV isnt "production"
 
 type = Type "Application"
-
-type.inherits Function
 
 type.defineArgs
   port: Number
@@ -38,16 +37,10 @@ type.defineValues (options) ->
 
   _layer: Layer()
 
-  _server: createServer this, options
+  _server: createServer options, onRequest.bind this
 
-  _listening: null
-
-type.initInstance (options) ->
-  @_server.maxHeadersCount = options.maxHeaders or 50
-  @_listening = @_listen options
-  return
-
-type.defineFunction (req, res) ->
+# The root request handler.
+onRequest = (req, res) ->
   req.timestamp = now()
 
   parts = req.url.split "?"
@@ -124,15 +117,9 @@ type.defineMethods
     return this
 
   ready: (callback) ->
-    @_listening.then callback
-
-  _listen: (options) ->
-    {port} = this
-    {promise, resolve} = Promise.defer()
-    @_server.listen port, ->
-      protocol = if options.secure then "https" else "http"
-      resolve protocol + "://" + ip.address() + ":" + port
-    return promise
+    if @_server.listening
+    then callback()
+    else @_server.once "listening", callback
 
 type.defineStatics
 
@@ -145,17 +132,6 @@ module.exports = type.build()
 #
 # Helpers
 #
-
-ssl = ->
-  fs = require "fs"
-  key = fs.readFileSync path.resolve("ssl.key"), "utf8"
-  cert = fs.readFileSync path.resolve("ssl.crt"), "utf8"
-  return {key, cert}
-
-createServer = (app, options) ->
-  if options.secure
-  then require("https").createServer ssl(), app
-  else require("http").createServer app
 
 getPort = (options) ->
   port = options.port or parseInt process.env.PORT
