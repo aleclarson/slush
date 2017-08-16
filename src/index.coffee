@@ -76,9 +76,13 @@ onRequest = (req, res) ->
       return onFinish res
 
   .then ->
+
     # Prevent DoS attacks using large POST bodies.
     req.destroy() if req.reading
-    measure req, res
+
+    if res.statusCode isnt 408
+      app.emit "response", res
+      measure req, res
 
   # Uncaught errors end up here.
   .fail (error) ->
@@ -87,6 +91,7 @@ onRequest = (req, res) ->
     log.moat 1
     res.status 500
     res.send {error: "Something went wrong on our end. Sorry!"}
+    app.emit "response", res
     measure req, res
 
 type.defineMethods
@@ -122,6 +127,12 @@ type.defineMethods
   drain: (fn) ->
     @_layer.drain fn
     return this
+
+  on: (eventId, handler) ->
+    @_server.on eventId, handler
+
+  emit: (eventId, data) ->
+    @_server.emit eventId, data
 
   ready: (callback) ->
     if @_server.listening
@@ -166,6 +177,7 @@ onFinish = (res) ->
 onTimeout = (req, res) ->
   res.status 408
   res.send {error: "Request timed out"}
+  @emit "response", req
   measure req, res
 
 measure = (req, res) ->
