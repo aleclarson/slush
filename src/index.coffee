@@ -133,6 +133,10 @@ type.defineMethods
     then callback()
     else @_server.once "listening", callback
 
+  # Used for testing.
+  _send: (req, res) ->
+    onRequest.call this, req, res
+
 type.defineStatics
 
   Layer: Layer
