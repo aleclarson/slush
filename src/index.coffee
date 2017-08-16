@@ -59,10 +59,8 @@ onRequest = (req, res) ->
   res.req = req
   setProto res, Response
 
-  req.next = ->
-    res.status 404
-    res.send {error: "Nothing exists here. Sorry!"}
-    return
+  # The default 404 response handler.
+  req.next = handle404
 
   # Prevent long-running requests.
   if app._timeout > 0
@@ -186,6 +184,12 @@ measure = (req, res) ->
   log.white req.method + " " + req.path + " "
   log.gray (now() - req.timestamp).toFixed(3) + "ms"
   log.moat 0
+  return
+
+# Attached to the request object.
+handle404 = ->
+  @res.status 404
+  @res.send {error: "Nothing exists here. Sorry!"}
   return
 
 # The default handler when the server throws an error.
