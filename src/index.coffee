@@ -1,5 +1,4 @@
 
-# TODO: Support custom "404 Not Found" page.
 # TODO: Support custom "500 Internal Error" page.
 
 assertTypes = require "assertTypes"
@@ -44,17 +43,18 @@ type.defineValues (options) ->
 
 # The root request handler.
 onRequest = (req, res) ->
+  app = this
   req.timestamp = now()
 
   parts = req.url.split "?"
   req.path = parts[0]
   req.query = parseQuery parts[1]
 
-  req.app = this
+  req.app = app
   req.res = res
   setProto req, Request
 
-  res.app = this
+  res.app = app
   res.req = req
   setProto res, Response
 
@@ -64,11 +64,11 @@ onRequest = (req, res) ->
     return
 
   # Prevent long-running requests.
-  if @_timeout > 0
-    req.setTimeout onTimeout, @_timeout
+  if app._timeout > 0
+    req.setTimeout onTimeout, app._timeout
 
   # Attempt to handle the request.
-  @_layer.try req, res
+  app._layer.try req, res
 
   # Wait for the response to finish.
   .then ->
