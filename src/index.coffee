@@ -150,10 +150,11 @@ module.exports = type.build()
 #
 
 getPort = (options) ->
-  port = options.port or parseInt process.env.PORT
-  return port if port
-  return 443 if options.secure
-  return 8000
+  unless port = options.port
+    unless port = parseInt process.env.PORT
+      port = if options.secure then 443 else 8000
+    options.port = port
+  return port
 
 parseQuery = (query) ->
   parsed = {}
