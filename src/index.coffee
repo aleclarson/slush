@@ -1,13 +1,9 @@
 
-assertTypes = require "assertTypes"
-assertType = require "assertType"
 setProto = require "setProto"
 Promise = require "Promise"
 Type = require "Type"
-path = require "path"
 now = require "performance-now"
 log = require "log"
-ip = require "ip"
 
 createServer = require "./utils/createServer"
 Response = require "../response"
