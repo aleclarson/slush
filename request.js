@@ -35,6 +35,16 @@ var req = Object.create(http.IncomingMessage.prototype)
 
 module.exports = req
 
+req.setTimeout = function(callback, timeout) {
+  var res = this.res;
+  var writeHead = res.writeHead;
+  res.writeHead = function(code, headers) {
+    clearTimeout(this.req.timeout);
+    writeHead.call(this, code, headers);
+  };
+  this.timeout = setTimeout(callback.bind(this.app, this, res), timeout);
+};
+
 req.readBody = function(options) {
   return readBody(this, options);
 };

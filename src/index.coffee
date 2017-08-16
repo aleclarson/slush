@@ -28,6 +28,7 @@ type.defineArgs
   port: Number
   secure: Boolean
   maxHeaders: Number
+  timeout: Number
 
 type.defineValues (options) ->
 
@@ -38,6 +39,8 @@ type.defineValues (options) ->
   _layer: Layer()
 
   _server: createServer options, onRequest.bind this
+
+  _timeout: options.timeout
 
 # The root request handler.
 onRequest = (req, res) ->
@@ -59,6 +62,10 @@ onRequest = (req, res) ->
     res.status 404
     res.send {error: "Nothing exists here. Sorry!"}
     return
+
+  # Prevent long-running requests.
+  if @_timeout > 0
+    req.setTimeout onTimeout, @_timeout
 
   # Attempt to handle the request.
   @_layer.try req, res
@@ -155,6 +162,11 @@ onFinish = (res) ->
   res.on "finish", deferred.resolve
   res.on "error", deferred.reject
   return deferred.promise
+
+onTimeout = (req, res) ->
+  res.status 408
+  res.send {error: "Request timed out"}
+  measure req, res
 
 measure = (req, res) ->
   return unless __DEV__
