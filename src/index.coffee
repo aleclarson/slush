@@ -1,6 +1,4 @@
 
-# TODO: Support custom "500 Internal Error" page.
-
 assertTypes = require "assertTypes"
 assertType = require "assertType"
 setProto = require "setProto"
@@ -28,6 +26,7 @@ type.defineArgs
   secure: Boolean
   maxHeaders: Number
   timeout: Number
+  onError: Function
 
 type.defineValues (options) ->
 
@@ -40,6 +39,8 @@ type.defineValues (options) ->
   _server: createServer options, onRequest.bind this
 
   _timeout: options.timeout
+
+  _onError: options.onError or handle500
 
 # The root request handler.
 onRequest = (req, res) ->
@@ -84,13 +85,8 @@ onRequest = (req, res) ->
       app.emit "response", res
       measure req, res
 
-  # Uncaught errors end up here.
   .fail (error) ->
-    log.moat 1
-    log.white error.stack
-    log.moat 1
-    res.status 500
-    res.send {error: "Something went wrong on our end. Sorry!"}
+    onError error, res
     app.emit "response", res
     measure req, res
 
@@ -190,4 +186,15 @@ measure = (req, res) ->
   log.white req.method + " " + req.path + " "
   log.gray (now() - req.timestamp).toFixed(3) + "ms"
   log.moat 0
+  return
+
+# The default handler when the server throws an error.
+handle500 = (error, res) ->
+
+  log.moat 1
+  log.white error.stack
+  log.moat 1
+
+  res.status 500
+  res.send {error: "Something went wrong on our end. Sorry!"}
   return
