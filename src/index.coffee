@@ -42,7 +42,7 @@ type.defineValues (options) ->
 # The root request handler.
 onRequest = (req, res) ->
   app = this
-  req.timestamp = now()
+  req.startTime = now()
 
   parts = req.url.split "?"
   req.path = parts[0]
