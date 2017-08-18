@@ -37,12 +37,12 @@ type.defineValues (options) ->
 
   _timeout: options.timeout
 
-  _onError: options.onError or handle500
+  _onError: options.onError or default500
 
 # The root request handler.
 onRequest = (req, res) ->
   app = this
-  req.timestamp = now()
+  req.startTime = now()
 
   parts = req.url.split "?"
   req.path = parts[0]
@@ -58,7 +58,7 @@ onRequest = (req, res) ->
   setProto res, Response
 
   # The default 404 response handler.
-  req.next = handle404
+  req.next = default404.bind req, res
 
   # Prevent long-running requests.
   if app._timeout > 0
@@ -166,26 +166,29 @@ onTimeout = (req, res) ->
   @emit "response", req
   measure req, res
 
-measure = (req, res) ->
-  return unless __DEV__
-  log.moat 0
-  status = res.statusCode
-  if status is 200
-  then log.green status + " "
-  else log.red status + " "
-  log.white req.method + " " + req.path + " "
-  log.gray (now() - req.timestamp).toFixed(3) + "ms"
-  log.moat 0
-  return
+# Only measure response times during development.
+measure = Function.prototype
+if __DEV__
+  measure = (req, res) ->
+    {elapsedTime} = req
+    log.moat 0
+    status = res.statusCode
+    if status is 200
+    then log.green status + " "
+    else log.red status + " "
+    log.white req.method + " " + req.path + " "
+    log.gray elapsedTime + "ms"
+    log.moat 0
+    return
 
 # Attached to the request object.
-handle404 = ->
-  @res.status 404
-  @res.send {error: "Nothing exists here. Sorry!"}
+default404 = (res) ->
+  res.status 404
+  res.send {error: "Nothing exists here. Sorry!"}
   return
 
 # The default handler when the server throws an error.
-handle500 = (error, res) ->
+default500 = (error, res) ->
 
   log.moat 1
   log.white error.stack

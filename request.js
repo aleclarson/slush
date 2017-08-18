@@ -13,6 +13,7 @@
  * @private
  */
 
+var now = require('performance-now');
 var isIP = require('net').isIP;
 var http = require('http');
 var fresh = require('fresh');
@@ -52,6 +53,10 @@ req.readBody = function(options) {
 req.get = function(name) {
   return this.headers[name];
 };
+
+defineGetter(req, 'elapsedTime', function elapsedTime() {
+  return (now() - this.startTime).toFixed(3);
+});
 
 /**
  * Return the protocol string "http" or "https"
