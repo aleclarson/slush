@@ -166,17 +166,20 @@ onTimeout = (req, res) ->
   @emit "response", req
   measure req, res
 
-measure = (req, res) ->
-  return unless __DEV__
-  log.moat 0
-  status = res.statusCode
-  if status is 200
-  then log.green status + " "
-  else log.red status + " "
-  log.white req.method + " " + req.path + " "
-  log.gray (now() - req.timestamp).toFixed(3) + "ms"
-  log.moat 0
-  return
+# Only measure response times during development.
+measure = Function.prototype
+if __DEV__
+  measure = (req, res) ->
+    {elapsedTime} = req
+    log.moat 0
+    status = res.statusCode
+    if status is 200
+    then log.green status + " "
+    else log.red status + " "
+    log.white req.method + " " + req.path + " "
+    log.gray elapsedTime + "ms"
+    log.moat 0
+    return
 
 # Attached to the request object.
 handle404 = ->
