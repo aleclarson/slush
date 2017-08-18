@@ -82,7 +82,7 @@ onRequest = (req, res) ->
       measure req, res
 
   .fail (error) ->
-    onError error, res
+    app._onError error, res
     app.emit "response", res
     measure req, res
 
