@@ -115,11 +115,11 @@ stringToBoolean = (query, key) ->
   return Error "Expected '#{key}' to be a Boolean"
 
 createRegex = (pattern) ->
-  paramRegex = /\{[^\}]+\}/g
+  paramRE = /:[^\/]+/gi
   params = []
   source = "^#{pattern}$"
-  while match = paramRegex.exec source
-    params.push match[0].slice 1, -1
+  while match = paramRE.exec pattern
+    params.push match[0].slice 1
     source = source.replace match[0], "([^\/]+)"
   regex = new RegExp source, "g"
   regex.params = params
