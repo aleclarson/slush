@@ -26,15 +26,13 @@ module.exports = (req, options = {}) ->
     return
 
   req.on "end", ->
-    return unless promise.isPending
-
-    if length > 0
+    if length and promise.isPending
       req.body = Buffer.concat chunks
-      req.json = parseJSON
-
-    if options.json
-    then parseJSON resolve
-    else resolve req.body
+      if options.json
+        parseJSON.call req, resolve
+      else
+        req.json = parseJSON
+        resolve req.body
 
   req.on "error", reject
 
