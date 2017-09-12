@@ -1,5 +1,5 @@
 
-# slush v2.4.0 ![stable](https://img.shields.io/badge/stability-stable-4EBA0F.svg?style=flat)
+# slush v2.4.1 ![stable](https://img.shields.io/badge/stability-stable-4EBA0F.svg?style=flat)
 
 Lightweight replacement to `express`.
 
@@ -68,3 +68,4 @@ app.drain (req, res) ->
 - `request: (req, res)` Called at the beginning of every request
 - `response: (req, res)` Called at the end of every response
 - `close: ()` Called when the server shuts down
+- `error: (error)` Called when the request handler catches an error

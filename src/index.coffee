@@ -3,7 +3,6 @@ setProto = require "setProto"
 Promise = require "Promise"
 Type = require "Type"
 now = require "performance-now"
-log = require "log"
 qs = require "querystring"
 
 createServer = require "./utils/createServer"
@@ -78,13 +77,11 @@ onRequest = (req, res) ->
     req.destroy() if req.reading
 
     if res.statusCode isnt 408
-      app.emit "response", res
-      measure req, res
+      app.emit "response", req, res
 
   .fail (error) ->
     app._onError error, res
-    app.emit "response", res
-    measure req, res
+    app.emit "response", req, res
 
 type.defineMethods
 
@@ -163,23 +160,8 @@ onFinish = (res) ->
 onTimeout = (req, res) ->
   res.status 408
   res.send {error: "Request timed out"}
-  @emit "response", req
-  measure req, res
-
-# Only measure response times during development.
-measure = Function.prototype
-if __DEV__
-  measure = (req, res) ->
-    {elapsedTime} = req
-    log.moat 0
-    status = res.statusCode
-    if status is 200
-    then log.green status + " "
-    else log.red status + " "
-    log.white req.method + " " + req.path + " "
-    log.gray elapsedTime + "ms"
-    log.moat 0
-    return
+  @emit "response", req, res
+  return
 
 # Attached to the request object.
 default404 = (res) ->
@@ -189,11 +171,7 @@ default404 = (res) ->
 
 # The default handler when the server throws an error.
 default500 = (error, res) ->
-
-  log.moat 1
-  log.white error.stack
-  log.moat 1
-
+  @emit "error", error
   res.status 500
   res.send {error: "Something went wrong on our end. Sorry!"}
   return
