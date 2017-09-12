@@ -78,12 +78,12 @@ onRequest = (req, res) ->
     req.destroy() if req.reading
 
     if res.statusCode isnt 408
-      app.emit "response", res
+      app.emit "response", req, res
       measure req, res
 
   .fail (error) ->
     app._onError error, res
-    app.emit "response", res
+    app.emit "response", req, res
     measure req, res
 
 type.defineMethods
@@ -163,7 +163,7 @@ onFinish = (res) ->
 onTimeout = (req, res) ->
   res.status 408
   res.send {error: "Request timed out"}
-  @emit "response", req
+  @emit "response", req, res
   measure req, res
 
 # Only measure response times during development.
