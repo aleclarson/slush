@@ -1,6 +1,6 @@
 {
   "name": "slush",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "main": "js/index",
   "plugins": [
     "lotus-coffee"
@@ -10,7 +10,7 @@
     "postinstall": "npm run build"
   },
   "dependencies": {
-    "Promise": "aleclarson/Promise#2.2.3",
+    "Promise": "aleclarson/Promise#2.2.5",
     "Type": "aleclarson/Type#2.4.0",
     "Validator": "aleclarson/Validator#1.2.0",
     "assertType": "aleclarson/assertType#2.0.2",
