@@ -1,5 +1,5 @@
 
-# slush v2.4.1 ![stable](https://img.shields.io/badge/stability-stable-4EBA0F.svg?style=flat)
+# slush v2.4.2 ![stable](https://img.shields.io/badge/stability-stable-4EBA0F.svg?style=flat)
 
 Lightweight replacement to `express`.
 
@@ -65,7 +65,8 @@ app.drain (req, res) ->
 
 ### Server events
 
-- `request: (req, res)` Called at the beginning of every request
-- `response: (req, res)` Called at the end of every response
-- `close: ()` Called when the server shuts down
-- `error: (error)` Called when the request handler catches an error
+- `request: (req, res)` A request was received
+- `response: (req, res)` A response has finished
+- `requestError: (error)` The request handler caught an error (not emitted when `options.onError` is defined)
+- `error: ()` A server error occurred [(see here)](https://nodejs.org/api/net.html#net_event_error)
+- `close: ()` The server has closed, all connections have ended [(see here)](https://nodejs.org/api/net.html#net_event_close)
