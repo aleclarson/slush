@@ -171,7 +171,7 @@ default404 = (res) ->
 
 # The default handler when the server throws an error.
 default500 = (error, res) ->
-  @emit "error", error
+  @emit "requestError", error
   res.status 500
   res.send {error: "Something went wrong on our end. Sorry!"}
   return
