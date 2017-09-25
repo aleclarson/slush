@@ -20,6 +20,7 @@ type = Type "Application"
 type.defineArgs
   port: Number
   secure: Boolean
+  getContext: Function
   maxHeaders: Number
   timeout: Number
   onError: Function

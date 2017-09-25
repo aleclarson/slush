@@ -1,18 +1,24 @@
 
 createServer = (options, handler) ->
-  server = if options.secure then https handler else http handler
+  server =
+    if options.secure then do ->
+      config = {}
+
+      if getContext = options.getContext
+        config.SNICallback = (hostname, done) ->
+          done null, getContext hostname
+
+      else
+        fs = require "fs"
+        path = require "path"
+        config.key = fs.readFileSync path.resolve("ssl.key"), "utf8"
+        config.cert = fs.readFileSync path.resolve("ssl.crt"), "utf8"
+
+      require("https").createServer config, handler 
+    else require("http").createServer handler
+
   server.maxHeadersCount = options.maxHeaders or 50
   server.listen options.port
   return server
-
-http = (handler) ->
-  require("http").createServer handler
-
-https = (handler) ->
-  fs = require "fs"
-  path = require "path"
-  key = fs.readFileSync path.resolve("ssl.key"), "utf8"
-  cert = fs.readFileSync path.resolve("ssl.crt"), "utf8"
-  require("https").createServer {key, cert}, handler
 
 module.exports = createServer
