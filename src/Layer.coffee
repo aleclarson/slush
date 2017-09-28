@@ -1,7 +1,8 @@
 
 emptyFunction = require "emptyFunction"
-assertType = require "assertType"
+assertValid = require "assertValid"
 Promise = require "Promise"
+isValid = require "isValid"
 Type = require "Type"
 
 type = Type "Layer"
@@ -15,7 +16,7 @@ type.defineValues ->
 type.defineMethods
 
   use: (fn) ->
-    assertType fn, Function
+    assertValid fn, "function"
     @_pipes.push (req, res) ->
       context = this
       new Promise (resolve) ->
@@ -24,12 +25,12 @@ type.defineMethods
     return
 
   pipe: (fn) ->
-    assertType fn, Function
+    assertValid fn, "function"
     @_pipes.push fn
     return
 
   drain: (fn) ->
-    assertType fn, Function
+    assertValid fn, "function"
     @_drains.push fn
     return
 
@@ -43,7 +44,7 @@ type.defineMethods
     req.next = ->
       return done() if ++index is pipes.length
       result = pipes[index].call context, req, res
-      if result and typeof result.then is "function"
+      if result and isValid result.then, "function"
       then result.then resolve
       else resolve result
 
@@ -51,7 +52,7 @@ type.defineMethods
       return if res.headersSent
       return req.next() unless result
 
-      if typeof result is "number"
+      if isValid result, "number"
         res.status result
         return res.end()
 
@@ -59,10 +60,10 @@ type.defineMethods
       if result.constructor is Object
         return res.send result
 
-      if typeof result is "string"
+      if isValid result, "string"
         return res.send result
 
-      if result instanceof Error
+      if isValid result, "error"
         res.status 400 if res.statusCode is 200
         return res.send {error: result.message}
 

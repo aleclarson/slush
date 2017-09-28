@@ -1,7 +1,7 @@
 
-Validator = require "Validator"
 Promise = require "Promise"
-isType = require "isType"
+isValid = require "isValid"
+valido = require "valido"
 Type = require "Type"
 
 readBody = require "./utils/readBody"
@@ -20,10 +20,10 @@ type.defineValues
 type.defineMethods
 
   match: (pattern) ->
-    if isType pattern, RegExp
+    if isValid pattern, "regexp"
       pattern.params = emptyArray
       @_regex = pattern
-    else if typeof pattern is "string"
+    else if isValid pattern, "string"
       @_regex = createRegex pattern
     else
       throw TypeError "Expected a String or RegExp!"
@@ -50,7 +50,7 @@ type.defineMethods
 
   _wrapResponder: (responder) ->
 
-    if isType @query, Object
+    if isValid @query, "object"
       queryTypes = @query
 
       Object.keys(queryTypes).forEach (key) ->
@@ -71,7 +71,7 @@ type.defineMethods
           return Error "Missing body" unless req.body
           return responder.call req, req.body, res
 
-    if isType @body, Object
+    if isValid @body, "object"
       bodyTypes = @body
       return (req, res) ->
         readBody(req).then ->
@@ -108,7 +108,7 @@ stringToBoolean = (query, key) ->
   else if (value is undefined) or (value is "false")
     value = no
 
-  if isType value, Boolean
+  if isValid value, "boolean"
     query[key] = value
     return
 
@@ -135,18 +135,8 @@ matchRegex = (req, regex) ->
   return yes
 
 validateTypes = (obj, types) ->
-
   for key, type of types
-
-    if typeof type is "function"
-
-      if not /[A-Z]/.test type.name[0]
-        return error if error = type obj, key
-
-      else if not isType obj[key], type
-        return Error "Expected '#{key}' to be a #{type.name}"
-
-    else if type instanceof Validator
-      return error if error = type.assert obj[key], key
-
+    type = valido.get type
+    if error = type.assert obj[key]
+      return error key
   return
