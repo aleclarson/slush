@@ -10,7 +10,7 @@ Response = require "../response"
 Request = require "../request"
 Layer = require "./Layer"
 
-trustProxy = require "./utils/trustProxy"
+createTrustProxy = require "./utils/createTrustProxy"
 etag = require "./utils/etag"
 
 __DEV__ = process.env.NODE_ENV isnt "production"
@@ -38,6 +38,11 @@ type.defineValues (options) ->
   _timeout: options.timeout
 
   _onError: options.onError or default500
+
+# Default settings
+type.initInstance ->
+  @set "trust proxy", false
+  return
 
 # The root request handler.
 onRequest = (req, res) ->
@@ -102,7 +107,7 @@ type.defineMethods
         @set "etag fn", etag.compile value
 
       when "trust proxy"
-        @set "trust proxy fn", trustProxy value
+        @set "trust proxy fn", createTrustProxy value
 
     return
 

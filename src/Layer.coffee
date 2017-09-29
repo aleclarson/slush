@@ -1,5 +1,4 @@
 
-emptyFunction = require "emptyFunction"
 assertValid = require "assertValid"
 Promise = require "Promise"
 isValid = require "isValid"
