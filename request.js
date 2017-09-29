@@ -51,7 +51,14 @@ req.readBody = function(options) {
 };
 
 req.get = function(name) {
-  return this.headers[name];
+  var header = this.headers[name];
+  if (!header) {
+    var nocaps = name.toLowerCase();
+    if (name !== nocaps) {
+      return this.headers[nocaps];
+    }
+  }
+  return header;
 };
 
 defineGetter(req, 'elapsedTime', function elapsedTime() {
