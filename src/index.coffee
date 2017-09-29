@@ -42,6 +42,7 @@ type.defineValues (options) ->
 # Default settings
 type.initInstance ->
   @set "trust proxy", false
+  @set "subdomain offset", 2
   return
 
 # The root request handler.
