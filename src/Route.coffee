@@ -52,17 +52,10 @@ type.defineMethods
 
     if isValid @query, "object"
       queryTypes = @query
-
       Object.keys(queryTypes).forEach (key) ->
-        type = queryTypes[key]
-        if type is Number
-          queryTypes[key] = stringToNumber
-        else if type is Boolean
-          queryTypes[key] = stringToBoolean
-        return
-
+        queryTypes[key] = valido.get queryTypes[key]
       return (req, res) -> Promise.try ->
-        return error if error = validateTypes req.query, queryTypes
+        return error if error = validateQuery req.query, queryTypes
         return responder.call req, req.query, res
 
     if @body is yes
@@ -73,6 +66,8 @@ type.defineMethods
 
     if isValid @body, "object"
       bodyTypes = @body
+      Object.keys(bodyTypes).forEach (key) ->
+        bodyTypes[key] = valido.get bodyTypes[key]
       return (req, res) ->
         readBody(req).then ->
           return Error "Missing body" unless req.body
@@ -89,30 +84,6 @@ module.exports = type.build()
 #
 # Helpers
 #
-
-stringToNumber = (query, key) ->
-  value = parseInt query[key]
-
-  if isNaN value
-    return Error "Expected '#{key}' to be a Number"
-
-  query[key] = value
-  return
-
-stringToBoolean = (query, key) ->
-  value = query[key]
-
-  if (value is "") or (value is "true")
-    value = yes
-
-  else if (value is undefined) or (value is "false")
-    value = no
-
-  if isValid value, "boolean"
-    query[key] = value
-    return
-
-  return Error "Expected '#{key}' to be a Boolean"
 
 createRegex = (pattern) ->
   paramRE = /:[^\/]+/gi
@@ -136,7 +107,32 @@ matchRegex = (req, regex) ->
 
 validateTypes = (obj, types) ->
   for key, type of types
-    type = valido.get type
-    if error = type.assert obj[key]
-      return error key
+    error = type.assert obj[key]
+    return error key if error
+  return
+
+validateQuery = (obj, types) ->
+  for key, type of types
+    coalesce obj, key, type.name
+    error = type.assert obj[key]
+    return error key if error
+  return
+
+coalesce = (obj, key, type) ->
+  value = obj[key]
+  switch type
+
+    when "number"
+      value = parseInt value
+      unless isNaN value
+        obj[key] = value
+
+    when "boolean"
+
+      if (value is undefined) or (value is "false")
+        obj[key] = false
+
+      else if (value is "") or (value is "true")
+        obj[key] = true
+
   return
