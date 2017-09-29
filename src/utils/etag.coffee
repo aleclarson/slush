@@ -26,4 +26,4 @@ compile = (weak) ->
   return (body, encoding) ->
     unless Buffer.isBuffer body
       body = new Buffer body, encoding
-    return etag buffer, options
+    return etag body, options
