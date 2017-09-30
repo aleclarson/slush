@@ -57,13 +57,15 @@ type.defineMethods
 
       # For security, only send objects: http://stackoverflow.com/a/21510402/2228559
       if result.constructor is Object
+        if result.hasOwnProperty "error"
+          res.status 400 if res.statusCode < 300
         return res.send result
 
       if isValid result, "string"
         return res.send result
 
       if isValid result, "error"
-        res.status 400 if res.statusCode is 200
+        res.status 400 if res.statusCode < 300
         return res.send {error: result.message}
 
       throw Error "Invalid return type: " + result.constructor
