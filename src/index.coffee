@@ -127,8 +127,11 @@ type.defineMethods
   on: (eventId, handler) ->
     @_server.on eventId, handler
 
-  emit: (eventId, data) ->
-    @_server.emit eventId, data
+  emit: (eventId) ->
+    switch arguments.length
+      when 1 then @_server.emit eventId
+      when 2 then @_server.emit eventId, arguments[1]
+      else @_server.emit eventId, arguments[1], arguments[2]
 
   ready: (callback) ->
     if @_server.listening
