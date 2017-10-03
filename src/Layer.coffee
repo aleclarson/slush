@@ -52,6 +52,7 @@ type.defineMethods
       return req.next() unless result
 
       if isValid result, "number"
+        res.set "Content-Length", 0
         res.status result
         return res.end()
 
