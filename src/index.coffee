@@ -138,6 +138,11 @@ type.defineMethods
     then callback()
     else @_server.once "listening", callback
 
+  close: (callback) ->
+    @_server.once "close", callback if callback
+    @_server.close()
+    return this
+
   # Used for testing.
   _send: (req, res) ->
     onRequest.call this, req, res
