@@ -56,7 +56,7 @@ type.defineMethods
         res.status result
         return res.end()
 
-      # For security, only send objects: http://stackoverflow.com/a/21510402/2228559
+      # For security, only send objects: https://goo.gl/Y1LRf6
       if result.constructor is Object
         if result.hasOwnProperty "error"
           res.status 400 if res.statusCode < 300
