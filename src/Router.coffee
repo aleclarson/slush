@@ -1,5 +1,6 @@
 
-assertType = require "assertType"
+assertValid = require "assertValid"
+isValid = require "isValid"
 Type = require "Type"
 
 Route = require "./Route"
@@ -16,7 +17,7 @@ methods.forEach (method) ->
   type.defineMethod method, (pattern, responder) ->
     route = Route()
 
-    if typeof pattern is 'function'
+    if isValid pattern, "function"
     then responder = pattern.call route
     else route.match pattern
 
@@ -26,7 +27,7 @@ methods.forEach (method) ->
 type.defineMethods
 
   push: (matcher) ->
-    assertType matcher, Function
+    assertValid matcher, "function"
     @_matchers.push matcher
     return
 

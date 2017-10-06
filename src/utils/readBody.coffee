@@ -1,7 +1,7 @@
 
 # TODO: Destroy streams that are uploading too slow.
 
-assertType = require "assertType"
+assertValid = require "assertValid"
 Promise = require "Promise"
 
 module.exports = (req, options = {}) ->
@@ -43,7 +43,7 @@ module.exports = (req, options = {}) ->
 #
 
 parseJSON = (callback) ->
-  assertType callback, Function
+  assertValid callback, "function"
   body = @body.toString()
   return Promise.try ->
     try json = JSON.parse body

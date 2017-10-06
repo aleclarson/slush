@@ -10,7 +10,7 @@ Response = require "../response"
 Request = require "../request"
 Layer = require "./Layer"
 
-trustProxy = require "./utils/trustProxy"
+createTrustProxy = require "./utils/createTrustProxy"
 etag = require "./utils/etag"
 
 __DEV__ = process.env.NODE_ENV isnt "production"
@@ -20,6 +20,7 @@ type = Type "Application"
 type.defineArgs
   port: Number
   secure: Boolean
+  getContext: Function
   maxHeaders: Number
   timeout: Number
   onError: Function
@@ -37,6 +38,12 @@ type.defineValues (options) ->
   _timeout: options.timeout
 
   _onError: options.onError or default500
+
+# Default settings
+type.initInstance ->
+  @set "trust proxy", false
+  @set "subdomain offset", 2
+  return
 
 # The root request handler.
 onRequest = (req, res) ->
@@ -101,7 +108,7 @@ type.defineMethods
         @set "etag fn", etag.compile value
 
       when "trust proxy"
-        @set "trust proxy fn", trustProxy value
+        @set "trust proxy fn", createTrustProxy value
 
     return
 
@@ -119,14 +126,25 @@ type.defineMethods
 
   on: (eventId, handler) ->
     @_server.on eventId, handler
+    return this
 
-  emit: (eventId, data) ->
-    @_server.emit eventId, data
+  emit: (eventId) ->
+    switch arguments.length
+      when 1 then @_server.emit eventId
+      when 2 then @_server.emit eventId, arguments[1]
+      else @_server.emit eventId, arguments[1], arguments[2]
+    return this
 
   ready: (callback) ->
     if @_server.listening
     then callback()
     else @_server.once "listening", callback
+    return this
+
+  close: (callback) ->
+    @_server.once "close", callback if callback
+    @_server.close()
+    return this
 
   # Used for testing.
   _send: (req, res) ->

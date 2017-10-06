@@ -1,7 +1,7 @@
 
-Validator = require "Validator"
 Promise = require "Promise"
-isType = require "isType"
+isValid = require "isValid"
+valido = require "valido"
 Type = require "Type"
 
 readBody = require "./utils/readBody"
@@ -20,10 +20,10 @@ type.defineValues
 type.defineMethods
 
   match: (pattern) ->
-    if isType pattern, RegExp
+    if isValid pattern, "regexp"
       pattern.params = emptyArray
       @_regex = pattern
-    else if typeof pattern is "string"
+    else if isValid pattern, "string"
       @_regex = createRegex pattern
     else
       throw TypeError "Expected a String or RegExp!"
@@ -50,19 +50,12 @@ type.defineMethods
 
   _wrapResponder: (responder) ->
 
-    if isType @query, Object
+    if isValid @query, "object"
       queryTypes = @query
-
       Object.keys(queryTypes).forEach (key) ->
-        type = queryTypes[key]
-        if type is Number
-          queryTypes[key] = stringToNumber
-        else if type is Boolean
-          queryTypes[key] = stringToBoolean
-        return
-
+        queryTypes[key] = valido.get queryTypes[key]
       return (req, res) -> Promise.try ->
-        return error if error = validateTypes req.query, queryTypes
+        return error if error = validateQuery req.query, queryTypes
         return responder.call req, req.query, res
 
     if @body is yes
@@ -71,8 +64,10 @@ type.defineMethods
           return Error "Missing body" unless req.body
           return responder.call req, req.body, res
 
-    if isType @body, Object
+    if isValid @body, "object"
       bodyTypes = @body
+      Object.keys(bodyTypes).forEach (key) ->
+        bodyTypes[key] = valido.get bodyTypes[key]
       return (req, res) ->
         readBody(req).then ->
           return Error "Missing body" unless req.body
@@ -89,30 +84,6 @@ module.exports = type.build()
 #
 # Helpers
 #
-
-stringToNumber = (query, key) ->
-  value = parseInt query[key]
-
-  if isNaN value
-    return Error "Expected '#{key}' to be a Number"
-
-  query[key] = value
-  return
-
-stringToBoolean = (query, key) ->
-  value = query[key]
-
-  if (value is "") or (value is "true")
-    value = yes
-
-  else if (value is undefined) or (value is "false")
-    value = no
-
-  if isType value, Boolean
-    query[key] = value
-    return
-
-  return Error "Expected '#{key}' to be a Boolean"
 
 createRegex = (pattern) ->
   paramRE = /:[^\/]+/gi
@@ -135,18 +106,33 @@ matchRegex = (req, regex) ->
   return yes
 
 validateTypes = (obj, types) ->
-
   for key, type of types
+    error = type.assert obj[key]
+    return error key if error
+  return
 
-    if typeof type is "function"
+validateQuery = (obj, types) ->
+  for key, type of types
+    coalesce obj, key, type.name
+    error = type.assert obj[key]
+    return error key if error
+  return
 
-      if not /[A-Z]/.test type.name[0]
-        return error if error = type obj, key
+coalesce = (obj, key, type) ->
+  value = obj[key]
+  switch type
 
-      else if not isType obj[key], type
-        return Error "Expected '#{key}' to be a #{type.name}"
+    when "number"
+      value = parseInt value
+      unless isNaN value
+        obj[key] = value
 
-    else if type instanceof Validator
-      return error if error = type.assert obj[key], key
+    when "boolean"
+
+      if (value is undefined) or (value is "false")
+        obj[key] = false
+
+      else if (value is "") or (value is "true")
+        obj[key] = true
 
   return

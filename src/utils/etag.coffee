@@ -1,7 +1,9 @@
 
+isValid = require "isValid"
+
 exports.compile = (value) ->
 
-  if typeof value is "function"
+  if isValid value, "function"
     return value
 
   if value is no
@@ -24,4 +26,4 @@ compile = (weak) ->
   return (body, encoding) ->
     unless Buffer.isBuffer body
       body = new Buffer body, encoding
-    return etag buffer, options
+    return etag body, options
