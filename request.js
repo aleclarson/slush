@@ -283,6 +283,9 @@ function defineGetter(obj, name, getter) {
   Object.defineProperty(obj, name, {
     configurable: true,
     enumerable: true,
-    get: getter
+    get: getter,
+    set: function() {
+      throw Error('`' + name + '` is not writable');
+    }
   });
 }
