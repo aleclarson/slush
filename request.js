@@ -18,7 +18,6 @@ var isIP = require('net').isIP;
 var http = require('http');
 var fresh = require('fresh');
 var parse = require('parseurl');
-var proxyaddr = require('proxy-addr');
 
 var readBody = require('./js/utils/readBody');
 
@@ -106,44 +105,6 @@ defineGetter(req, 'protocol', function protocol(){
 
 defineGetter(req, 'secure', function secure(){
   return this.protocol === 'https';
-});
-
-/**
- * Return the remote address from the trusted proxy.
- *
- * The is the remote address on the socket unless
- * "trust proxy" is set.
- *
- * @return {String}
- * @public
- */
-
-defineGetter(req, 'ip', function ip(){
-  var trust = this.app.get('trust proxy fn');
-  return proxyaddr(this, trust);
-});
-
-/**
- * When "trust proxy" is set, trusted proxy addresses + client.
- *
- * For example if the value were "client, proxy1, proxy2"
- * you would receive the array `["client", "proxy1", "proxy2"]`
- * where "proxy2" is the furthest down-stream and "proxy1" and
- * "proxy2" were trusted.
- *
- * @return {Array}
- * @public
- */
-
-defineGetter(req, 'ips', function ips() {
-  var trust = this.app.get('trust proxy fn');
-  var addrs = proxyaddr.all(this, trust);
-
-  // reverse the order (to farthest -> closest)
-  // and remove socket address
-  addrs.reverse().pop()
-
-  return addrs
 });
 
 /**
