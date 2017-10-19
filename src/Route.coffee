@@ -44,9 +44,9 @@ type.defineMethods
           return Promise.resolve 403
         return responder req, res
 
-    return (req) ->
+    return (req, pathname) ->
       return if req.method isnt method
-      return route if matchRegex req, regex
+      return route if matchRegex regex, pathname, req.query
 
   _wrapResponder: (responder) ->
 
@@ -96,12 +96,12 @@ createRegex = (pattern) ->
   regex.params = params
   return regex
 
-matchRegex = (req, regex) ->
+matchRegex = (regex, pathname, query) ->
   regex.lastIndex = 0
-  return no unless match = regex.exec req.path
+  return no unless match = regex.exec pathname
   return yes if match.length is 1
   match.slice(1).forEach (value, index) ->
-    req.query[regex.params[index] or index] = value
+    query[regex.params[index] or index] = value
     return
   return yes
 

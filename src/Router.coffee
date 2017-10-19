@@ -31,12 +31,11 @@ type.defineMethods
     @_matchers.push matcher
     return
 
-  match: (req) ->
+  match: (req, pathname = req.path) ->
     index = -1
     matchers = @_matchers
     while ++index < matchers.length
-      match = matchers[index] req
-      continue unless match
+      continue unless match = matchers[index] req, pathname
       return match if typeof match is "function"
       return -> match
     return null
