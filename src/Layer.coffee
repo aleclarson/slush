@@ -51,23 +51,24 @@ type.defineMethods
       return if res.headersSent
       return req.next() unless result
 
-      if isValid result, "number"
-        res.set "Content-Length", 0
-        res.status result
-        return res.end()
-
-      # For security, only send objects: https://goo.gl/Y1LRf6
       if result.constructor is Object
-        if result.hasOwnProperty "error"
-          res.status 400 if res.statusCode < 300
         return res.send result
 
       if isValid result, "string"
         return res.send result
 
+      if isValid result, "number"
+        res.set "Content-Length", 0
+        res.status result
+        return res.end()
+
       if isValid result, "error"
         res.status 400 if res.statusCode < 300
         return res.send {error: result.message}
+
+      # For security, arrays must be wrapped with an object: https://goo.gl/Y1LRf6
+      if Array.isArray result
+        throw Error "Array responses are insecure"
 
       throw Error "Invalid return type: " + result.constructor
 
