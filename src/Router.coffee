@@ -40,4 +40,8 @@ type.defineMethods
       return -> match
     return null
 
+  extend: (fns) ->
+    fn this for fn in fns
+    return
+
 module.exports = type.build()
