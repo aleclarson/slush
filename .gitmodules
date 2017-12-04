@@ -1,0 +1,3 @@
+[submodule "slush-router"]
+        path = packages/slush-router
+        url = https://github.com/aleclarson/slush-router.git
