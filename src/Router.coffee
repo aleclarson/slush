@@ -40,6 +40,10 @@ type.defineMethods
       return -> match
     return null
 
+  matcher: (pathname) -> (req, res) ->
+    if route = router.match req, pathname
+      return route req, res
+
   extend: (fns) ->
     fn this for fn in fns
     return
