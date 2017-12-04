@@ -150,11 +150,7 @@ type.defineMethods
   _send: (req, res) ->
     onRequest.call this, req, res
 
-type.defineStatics
-
-  Layer: Layer
-
-  Router: require "./Router"
+type.defineStatics {Layer}
 
 module.exports = type.build()
 
