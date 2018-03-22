@@ -18,8 +18,7 @@ var isIP = require('net').isIP;
 var http = require('http');
 var fresh = require('fresh');
 var parse = require('parseurl');
-
-var readBody = require('./js/utils/readBody');
+var readBody = require('read-body');
 
 /**
  * Request prototype.
@@ -47,10 +46,6 @@ req.setTimeout = function(callback, timeout) {
 
 req.readBody = function(options) {
   return readBody(this, options);
-};
-
-req.readJSON = function(options) {
-  return readBody(this, Object.assign({}, options, {json: true}));
 };
 
 req.get = function(name) {
