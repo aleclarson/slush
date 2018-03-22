@@ -15,6 +15,7 @@ createTrustProxy = require "./utils/createTrustProxy"
 etag = require "./utils/etag"
 
 optionTypes = valido
+  path: "string?"
   port: "number?"
   secure: "boolean?"
   getContext: "function?"
