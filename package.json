@@ -2,13 +2,6 @@
   "name": "slush",
   "version": "3.0.0",
   "main": "js/index",
-  "plugins": [
-    "lotus-coffee"
-  ],
-  "scripts": {
-    "build": "coffee-build -v 1.12.x -b -o js src",
-    "postinstall": "npm run build"
-  },
   "dependencies": {
     "assertValid": "aleclarson/assertValid#1.0.1",
     "emptyFunction": "aleclarson/emptyFunction#1.0.0",
@@ -26,5 +19,11 @@
     "valido": "aleclarson/valido#1.1.4",
     "vary": "^1.1.1",
     "wrap-defaults": "^0.0.1"
+  },
+  "plugins": [
+    "lotus-coffee"
+  ],
+  "devDependencies": {
+    "coffeescript": "^2.2.3"
   }
 }
