@@ -10,7 +10,6 @@
     "postinstall": "npm run build"
   },
   "dependencies": {
-    "Promise": "aleclarson/Promise#2.3.0",
     "assertValid": "aleclarson/assertValid#1.0.1",
     "emptyFunction": "aleclarson/emptyFunction#1.0.0",
     "encodeurl": "^1.0.1",

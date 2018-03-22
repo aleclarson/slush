@@ -2,7 +2,6 @@
 wrapDefaults = require "wrap-defaults"
 assertValid = require "assertValid"
 setProto = require "setProto"
-Promise = require "Promise"
 valido = require "valido"
 now = require "performance-now"
 qs = require "querystring"
@@ -168,10 +167,9 @@ onRequest = (req, res) ->
     app.emit "response", req, res
 
 onFinish = (res) ->
-  deferred = Promise.defer()
-  res.on "finish", deferred.resolve
-  res.on "error", deferred.reject
-  return deferred.promise
+  new Promise (resolve, reject) ->
+    res.on "finish", resolve
+    res.on "error", reject
 
 onTimeout = (req, res) ->
   res.status 408

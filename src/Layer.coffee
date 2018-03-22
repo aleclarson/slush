@@ -1,6 +1,5 @@
 
 assertValid = require "assertValid"
-Promise = require "Promise"
 isValid = require "isValid"
 
 class Layer
@@ -70,18 +69,26 @@ class Layer
     unless drains.length
       return Promise.try req.next
 
-    drain = ->
+    Promise.try req.next
+    .finally ->
       fn req, res for fn in drains
       return
-
-    Promise.try req.next
-    .then drain, drain
 
 module.exports = Layer
 
 #
 # Helpers
 #
+
+# `finally` polyfill
+Promise::finally ?= (fn) ->
+  wrap = (val) ->
+    fn()
+    val
+  @then wrap, wrap
+
+Promise.try ?= (fn) ->
+  Promise.resolve().then fn
 
 hookOnce = (obj, key, hook) ->
   orig = obj[key]
