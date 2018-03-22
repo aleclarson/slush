@@ -14,8 +14,6 @@ Layer = require "./Layer"
 createTrustProxy = require "./utils/createTrustProxy"
 etag = require "./utils/etag"
 
-__DEV__ = process.env.NODE_ENV isnt "production"
-
 optionTypes = valido
   port: "number?"
   secure: "boolean?"
