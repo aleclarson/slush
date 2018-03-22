@@ -15,17 +15,18 @@ class Layer
       new Promise (resolve) ->
         hookOnce req, "next", resolve
         fn.call context, req, res, req.next
-    return
+
+    return this
 
   pipe: (fn) ->
     assertValid fn, "function"
     @_pipes.push fn
-    return
+    return this
 
   drain: (fn) ->
     assertValid fn, "function"
     @_drains.push fn
-    return
+    return this
 
   try: (req, res) ->
     done = req.next

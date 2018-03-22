@@ -75,7 +75,7 @@ class App
       when "trust proxy"
         @set "trust proxy fn", createTrustProxy value
 
-    return
+    return this
 
   use: (fn) ->
     @_layer.use fn
