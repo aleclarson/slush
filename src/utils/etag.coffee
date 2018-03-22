@@ -1,9 +1,7 @@
 
-isValid = require "isValid"
-
 exports.compile = (value) ->
 
-  if isValid value, "function"
+  if typeof value is "function"
     return value
 
   if value is no

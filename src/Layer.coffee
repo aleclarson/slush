@@ -1,4 +1,3 @@
-
 assertValid = require "assertValid"
 isValid = require "isValid"
 
@@ -10,11 +9,11 @@ class Layer
 
   use: (fn) ->
     assertValid fn, "function"
+
     @_pipes.push (req, res) ->
-      context = this
-      new Promise (resolve) ->
+      new Promise (resolve) =>
         hookOnce req, "next", resolve
-        fn.call context, req, res, req.next
+        fn.call this, req, res, req.next
 
     return this
 
@@ -33,12 +32,12 @@ class Layer
     pipes = @_pipes
     drains = @_drains
 
-    context = {}
+    ctx = {}
     index = -1
     req.next = ->
       return done() if ++index is pipes.length
-      result = pipes[index].call context, req, res
-      if result and isValid result.then, "function"
+      result = pipes[index].call ctx, req, res
+      if isValid result, "promise"
       then result.then resolve
       else resolve result
 

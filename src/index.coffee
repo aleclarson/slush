@@ -1,4 +1,3 @@
-
 wrapDefaults = require "wrap-defaults"
 assertValid = require "assertValid"
 setProto = require "setProto"
@@ -61,11 +60,11 @@ class App
 
   set: (name, value) ->
 
-    # Backwards compatibility with `express`
-    return @settings[name] if arguments.length is 1
+    # Remain compatible with `express`
+    if arguments.length is 1
+      return @settings[name]
 
     @settings[name] = value
-
     switch name
 
       when "etag"
@@ -88,29 +87,26 @@ class App
     @_layer.drain fn
     return this
 
-  on: (eventId, handler) ->
-    @_server.on eventId, handler
+  on: (id, fn) ->
+    @_server.on id, fn
     return this
 
-  emit: (eventId) ->
-    switch arguments.length
-      when 1 then @_server.emit eventId
-      when 2 then @_server.emit eventId, arguments[1]
-      else @_server.emit eventId, arguments[1], arguments[2]
+  emit: ->
+    @_server.emit ...arguments
     return this
 
-  ready: (callback) ->
+  ready: (fn) ->
     if @_server.listening
-    then callback()
-    else @_server.once "listening", callback
+    then fn()
+    else @_server.once "listening", fn
     return this
 
-  close: (callback) ->
-    @_server.once "close", callback if callback
+  close: (fn) ->
+    @_server.once "close", fn if fn
     @_server.close()
     return this
 
-  # Used for testing.
+  # For testing only.
   _send: (req, res) ->
     onRequest.call this, req, res
 
@@ -121,11 +117,11 @@ module.exports = App
 # Helpers
 #
 
-getPort = (options) ->
-  unless port = options.port
+getPort = (opts) ->
+  unless port = opts.port
     unless port = parseInt process.env.PORT
-      port = if options.secure then 443 else 8000
-    options.port = port
+      port = if opts.secure then 443 else 8000
+    opts.port = port
   return port
 
 onRequest = (req, res) ->
@@ -178,6 +174,5 @@ onFinish = (res) ->
 
 onTimeout = (req, res) ->
   res.status 408
-  res.send {error: "Request timed out"}
   @emit "response", req, res
   return

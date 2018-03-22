@@ -1,11 +1,10 @@
-
 emptyFunction = require "emptyFunction"
 proxyaddr = require "proxy-addr"
-isValid = require "isValid"
 
 createTrustProxy = (value) ->
+  value_t = typeof value
 
-  if typeof value is "function"
+  if value_t is "function"
     return value
 
   if value is true
@@ -15,11 +14,11 @@ createTrustProxy = (value) ->
     return emptyFunction.thatReturnsFalse
 
   # Support trusting 'hop count'
-  if isValid value, "number"
+  if value_t is "number"
     return (a, i) -> i < value
 
   # Support comma-separated values
-  if isValid value, "string"
+  if value_t is "string"
     value = value.split /\s*,\s*/
 
   return proxyaddr.compile value or []

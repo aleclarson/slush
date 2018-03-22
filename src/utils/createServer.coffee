@@ -1,10 +1,10 @@
 
-createServer = (options, handler) ->
+createServer = (opts, handler) ->
   server =
-    if options.secure then do ->
+    if opts.secure then do ->
       config = {}
 
-      if getContext = options.getContext
+      if getContext = opts.getContext
         config.SNICallback = (hostname, done) ->
           done null, getContext hostname
 
@@ -14,11 +14,11 @@ createServer = (options, handler) ->
         config.key = fs.readFileSync path.resolve("ssl.key"), "utf8"
         config.cert = fs.readFileSync path.resolve("ssl.crt"), "utf8"
 
-      require("https").createServer config, handler 
+      require("https").createServer config, handler
     else require("http").createServer handler
 
-  server.maxHeadersCount = options.maxHeaders or 50
-  server.listen options.path or options.port
+  server.maxHeadersCount = opts.maxHeaders
+  server.listen opts.path or opts.port
   return server
 
 module.exports = createServer
