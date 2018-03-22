@@ -23,6 +23,7 @@ optionTypes = valido
   maxHeaders: "number?"
   timeout: "number?"
   onError: "function?"
+  onUnhandled: "function?"
 
 setDefaults = wrapDefaults
   secure: false
@@ -31,6 +32,10 @@ setDefaults = wrapDefaults
 
   onError: (error, res) ->
     res.status 500
+    res.end()
+
+  onUnhandled: (res) ->
+    res.status 404
     res.end()
 
 class App
@@ -49,6 +54,7 @@ class App
     @_server = createServer opts, onRequest.bind this
     @_timeout = opts.timeout
     @_onError = opts.onError
+    @_onUnhandled = opts.onUnhandled
     @
 
   get: (name) ->
@@ -141,7 +147,7 @@ onRequest = (req, res) ->
   setProto res, Response
 
   # The unhandled request handler.
-  req.next = default404.bind req, res
+  req.next = app._onUnhandled.bind req, res
 
   # Prevent long-running requests.
   if app._timeout > 0
@@ -176,7 +182,3 @@ onTimeout = (req, res) ->
   res.send {error: "Request timed out"}
   @emit "response", req, res
   return
-
-default404 = (res) ->
-  res.status 404
-  res.end()
