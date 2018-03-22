@@ -1,7 +1,9 @@
 
+wrapDefaults = require "wrap-defaults"
+assertValid = require "assertValid"
 setProto = require "setProto"
 Promise = require "Promise"
-Type = require "Type"
+valido = require "valido"
 now = require "performance-now"
 qs = require "querystring"
 
@@ -15,82 +17,40 @@ etag = require "./utils/etag"
 
 __DEV__ = process.env.NODE_ENV isnt "production"
 
-type = Type "Application"
+optionTypes = valido
+  port: "number?"
+  secure: "boolean?"
+  getContext: "function?"
+  maxHeaders: "number?"
+  timeout: "number?"
+  onError: "function?"
 
-type.defineArgs
-  port: Number
-  secure: Boolean
-  getContext: Function
-  maxHeaders: Number
-  timeout: Number
-  onError: Function
+setDefaults = wrapDefaults
+  secure: false
+  maxHeaders: 50
+  timeout: 0
 
-type.defineValues (options) ->
+  onError: (error, res) ->
+    res.status 500
+    res.end()
 
-  port: getPort options
+class App
+  constructor: (opts) ->
+    assertValid opts, optionTypes
+    setDefaults opts
 
-  settings: Object.create null
+    @port = getPort opts
+    @settings = Object.create null
 
-  _layer: Layer()
+    # Default settings
+    @set "trust proxy", false
+    @set "subdomain offset", 2
 
-  _server: createServer options, onRequest.bind this
-
-  _timeout: options.timeout
-
-  _onError: options.onError or default500
-
-# Default settings
-type.initInstance ->
-  @set "trust proxy", false
-  @set "subdomain offset", 2
-  return
-
-# The root request handler.
-onRequest = (req, res) ->
-  app = this
-  req.startTime = now()
-
-  parts = req.url.split "?"
-  req.path = parts[0]
-  req.query = qs.parse parts[1]
-  setProto req.query, Object.prototype
-
-  req.app = app
-  req.res = res
-  setProto req, Request
-
-  res.app = app
-  res.req = req
-  setProto res, Response
-
-  # The default 404 response handler.
-  req.next = default404.bind req, res
-
-  # Prevent long-running requests.
-  if app._timeout > 0
-    req.setTimeout onTimeout, app._timeout
-
-  # Attempt to handle the request.
-  app._layer.try req, res
-
-  # Wait for the response to finish.
-  .then ->
-    unless res.finished
-      return onFinish res
-
-  .then ->
-
-    # Prevent DoS attacks using large POST bodies.
-    req.destroy() if req.reading
-
-    if res.statusCode isnt 408
-      app.emit "response", req, res
-
-  .fail (error) ->
-    app._onError error, res
-    app.emit "response", req, res
-
-type.defineMethods
+    @_layer = new Layer
+    @_server = createServer opts, onRequest.bind this
+    @_timeout = opts.timeout
+    @_onError = opts.onError
+    @
 
   get: (name) ->
     return @settings[name]
@@ -150,9 +110,8 @@ type.defineMethods
   _send: (req, res) ->
     onRequest.call this, req, res
 
-type.defineStatics {Layer}
-
-module.exports = type.build()
+App.Layer = Layer
+module.exports = App
 
 #
 # Helpers
@@ -164,6 +123,49 @@ getPort = (options) ->
       port = if options.secure then 443 else 8000
     options.port = port
   return port
+
+onRequest = (req, res) ->
+  app = this
+  req.startTime = now()
+
+  parts = req.url.split "?"
+  req.path = parts[0]
+  req.query = qs.parse parts[1]
+  setProto req.query, Object.prototype
+
+  req.app = app
+  req.res = res
+  setProto req, Request
+
+  res.app = app
+  res.req = req
+  setProto res, Response
+
+  # The unhandled request handler.
+  req.next = default404.bind req, res
+
+  # Prevent long-running requests.
+  if app._timeout > 0
+    req.setTimeout onTimeout, app._timeout
+
+  try
+    # Attempt to handle the request.
+    await app._layer.try req, res
+
+    # Wait for the response to finish.
+    unless res.finished
+      await onFinish res
+
+    # Prevent DoS attacks using large POST bodies.
+    req.destroy() if req.reading
+
+    if res.statusCode isnt 408
+      app.emit "response", req, res
+
+  catch error
+    app.emit "requestError", error
+    app._onError error, res
+    app.emit "response", req, res
 
 onFinish = (res) ->
   deferred = Promise.defer()
@@ -177,15 +179,6 @@ onTimeout = (req, res) ->
   @emit "response", req, res
   return
 
-# Attached to the request object.
 default404 = (res) ->
   res.status 404
-  res.send {error: "Nothing exists here. Sorry!"}
-  return
-
-# The default handler when the server throws an error.
-default500 = (error, res) ->
-  @emit "requestError", error
-  res.status 500
-  res.send {error: "Something went wrong on our end. Sorry!"}
-  return
+  res.end()

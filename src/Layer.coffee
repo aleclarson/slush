@@ -2,17 +2,12 @@
 assertValid = require "assertValid"
 Promise = require "Promise"
 isValid = require "isValid"
-Type = require "Type"
 
-type = Type "Layer"
-
-type.defineValues ->
-
-  _pipes: []
-
-  _drains: []
-
-type.defineMethods
+class Layer
+  constructor: ->
+    @_pipes = []
+    @_drains = []
+    @
 
   use: (fn) ->
     assertValid fn, "function"
@@ -82,7 +77,7 @@ type.defineMethods
     Promise.try req.next
     .then drain, drain
 
-module.exports = type.build()
+module.exports = Layer
 
 #
 # Helpers
