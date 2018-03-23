@@ -110,8 +110,11 @@ class App
   _send: (req, res) ->
     onRequest.call this, req, res
 
-App.Layer = Layer
-module.exports = App
+slush = (opts) ->
+  new App opts
+
+slush.Layer = Layer
+module.exports = slush
 
 #
 # Helpers
