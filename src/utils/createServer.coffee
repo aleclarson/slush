@@ -18,7 +18,7 @@ createServer = (opts, handler) ->
     else require("http").createServer handler
 
   server.maxHeadersCount = opts.maxHeaders
-  server.listen opts.path or opts.port
+  server.listen opts.sock or opts.port
   return server
 
 module.exports = createServer

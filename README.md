@@ -13,7 +13,7 @@ app.ready ->
 
 ### Options
 
-- **path: String?** Listen on a socket path
+- **sock: String?** Listen on a socket path
 - **port: Number?** If undefined, default to `process.env.PORT`, or `443` (if HTTPS), or `8000` (if HTTP)
 - **secure: Boolean?** If true, an HTTPS server is created with `ssl.key` and `ssl.crt` from the project root
 - **maxHeaders: Number?** Limit the number of headers (defaults to 50)
