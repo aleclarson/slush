@@ -58,7 +58,10 @@ class Layer
 
       if isValid val, "error"
         res.status 400 if res.statusCode < 300
-        return res.send {error: val.message}
+        return res.send
+          type: val.type
+          code: val.code
+          error: val.message
 
       # For security, arrays must be wrapped with an object: https://goo.gl/Y1LRf6
       if Array.isArray val
