@@ -48,6 +48,11 @@ req.readBody = function(options) {
   return readBody(this, options);
 };
 
+req.json = function(options) {
+  this.readBody(options)
+  return this.json()
+};
+
 req.get = function(name) {
   var header = this.headers[name];
   if (!header) {
