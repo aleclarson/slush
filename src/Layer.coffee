@@ -36,35 +36,35 @@ class Layer
     index = -1
     req.next = ->
       return done() if ++index is pipes.length
-      result = pipes[index].call ctx, req, res
-      if isValid result, "promise"
-      then result.then resolve
-      else resolve result
+      val = pipes[index].call ctx, req, res
+      if isValid val, "promise"
+      then val.then resolve
+      else resolve val
 
-    resolve = (result) ->
+    resolve = (val) ->
       return if res.headersSent
-      return req.next() unless result
+      return req.next() unless val
 
-      if result.constructor is Object
-        return res.send result
+      if val.constructor is Object
+        return res.send val
 
-      if isValid result, "string"
-        return res.send result
+      if isValid val, "string"
+        return res.send val
 
-      if isValid result, "number"
+      if isValid val, "number"
         res.set "Content-Length", 0
-        res.status result
+        res.status val
         return res.end()
 
-      if isValid result, "error"
+      if isValid val, "error"
         res.status 400 if res.statusCode < 300
-        return res.send {error: result.message}
+        return res.send {error: val.message}
 
       # For security, arrays must be wrapped with an object: https://goo.gl/Y1LRf6
-      if Array.isArray result
+      if Array.isArray val
         throw Error "Array responses are insecure"
 
-      throw Error "Invalid return type: " + result.constructor
+      throw Error "Invalid return type: " + val.constructor
 
     unless drains.length
       return Promise.try req.next
