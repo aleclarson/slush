@@ -305,16 +305,16 @@ res.append = function append(field, val) {
 
 res.set =
 res.header = function header(field, val) {
-  if (arguments.length === 2) {
-    var value = Array.isArray(val)
+  if (arguments.length < 2) {
+    for (let key in field) {
+      this.set(key, field[key]);
+    }
+  } else if (val != null) {
+    let value = Array.isArray(val)
       ? val.map(String)
       : String(val);
 
     this.setHeader(field, value);
-  } else {
-    for (var key in field) {
-      this.set(key, field[key]);
-    }
   }
   return this;
 };
