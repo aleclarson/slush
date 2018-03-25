@@ -53,6 +53,10 @@ req.json = function(options) {
   return this.json()
 };
 
+req.accepts = function(mime) {
+  return this.get('accept') === mime;
+};
+
 req.get = function(name) {
   var header = this.headers[name];
   if (!header) {
