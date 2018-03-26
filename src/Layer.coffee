@@ -45,28 +45,16 @@ class Layer
       return if res.headersSent
       return req.next() unless val
 
-      if val is true
-        res.set "Content-Length", 0
-        res.status 204
-        return res.end()
+      # `true` means "no response body"
+      val = 204 if val is true
 
-      if val.constructor is Object
-        return res.send val
-
-      if isValid val, "string"
-        return res.send val
-
-      if isValid val, "number"
-        res.set "Content-Length", 0
-        res.status val
-        return res.end()
-
-      if isValid val, "error"
-        res.status 400 if res.statusCode < 300
-        return res.send
-          type: val.type
-          code: val.code
-          error: val.message
+      switch val.constructor
+        when Object, String
+          return res.send val
+        when Number
+          res.set "Content-Length", 0
+          res.status val
+          return res.end()
 
       # For security, arrays must be wrapped with an object: https://goo.gl/Y1LRf6
       if Array.isArray val
