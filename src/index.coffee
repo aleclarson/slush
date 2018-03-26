@@ -28,7 +28,8 @@ setDefaults = wrapDefaults
   maxHeaders: 50
   timeout: 0
 
-  onError: (error, res) ->
+  onError: (err, res) ->
+    console.error err
     res.status 500
     res.end()
 
