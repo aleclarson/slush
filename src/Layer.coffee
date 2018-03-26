@@ -45,6 +45,11 @@ class Layer
       return if res.headersSent
       return req.next() unless val
 
+      if val is true
+        res.set "Content-Length", 0
+        res.status 204
+        return res.end()
+
       if val.constructor is Object
         return res.send val
 
