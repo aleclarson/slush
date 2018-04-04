@@ -51,7 +51,6 @@ class App
 
     @_layer = new Layer
     @_server = createServer opts, onRequest.bind this
-    @_timeout = opts.timeout
     @_onError = opts.onError
     @_onUnhandled = opts.onUnhandled
     @
@@ -147,10 +146,6 @@ onRequest = (req, res) ->
 
   # The unhandled request handler.
   req.next = app._onUnhandled.bind req, res
-
-  # Prevent long-running requests.
-  if app._timeout > 0
-    req.setTimeout onTimeout, app._timeout
 
   try
     # Attempt to handle the request.
