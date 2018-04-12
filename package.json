@@ -21,6 +21,11 @@
     "wrap-defaults": "^0.0.1"
   },
   "devDependencies": {
-    "coffeescript": "^2.2.3"
+    "coffeescript": "^2.2.3",
+    "wch-coffee": "^0.2.0"
+  },
+  "scripts": {
+    "build": "coffee-build src -o js",
+    "prepublish": "prepv -i || true"
   }
 }
