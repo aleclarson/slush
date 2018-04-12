@@ -1,6 +1,6 @@
 {
   "name": "slush",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "main": "js/index",
   "dependencies": {
     "assertValid": "aleclarson/assertValid#1.0.1",
