@@ -133,7 +133,7 @@ res.send = function send(body) {
   if (chunk !== undefined) {
     if (!Buffer.isBuffer(chunk)) {
       // convert chunk to Buffer; saves later double conversions
-      chunk = new Buffer(chunk, encoding);
+      chunk = Buffer.from(chunk, encoding);
       encoding = undefined;
     }
 
