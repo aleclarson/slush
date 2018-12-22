@@ -49,8 +49,7 @@ req.readBody = function(options) {
 };
 
 req.json = function(options) {
-  readBody(this, options);
-  return this.json();
+  return readBody(this, options).then(() => this.json());
 };
 
 req.accepts = function(mime) {
